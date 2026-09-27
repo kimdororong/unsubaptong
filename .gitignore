@@ -1,0 +1,11 @@
+# 사이트에 필요한 파일만 올려요. 디자인 원본·문서·레퍼런스는 이 컴퓨터에만 둬요.
+/*
+!/.gitignore
+!/.nojekyll
+!/index.html
+!/img/
+!/fonts/
+!/icons/
+/icons/*
+!/icons/메뉴/
+.DS_Store

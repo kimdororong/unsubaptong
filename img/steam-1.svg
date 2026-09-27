@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="218 712 734 776" width="734" height="776">
+<defs><style>
+      .st0 {
+        fill: #49baba;
+      }
+
+      .st1 {
+        stroke: #000;
+        stroke-miterlimit: 10;
+        stroke-width: .5px;
+      }
+
+      .st2 {
+        fill: #fff;
+      }
+    </style></defs>
+<g>
+    <rect x="682.7" y="962" width="5.4" height="5.4" />
+    <rect x="688" y="956.6" width="5.4" height="5.4" />
+    <rect class="st2" x="688" y="962" width="5.4" height="5.4" />
+    <rect x="693.4" y="962" width="5.4" height="5.4" />
+    <rect x="688" y="967.3" width="5.4" height="5.4" />
+  </g>
+  
+</svg>

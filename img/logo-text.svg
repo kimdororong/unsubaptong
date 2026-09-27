@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="469.9 269.4 230.1 59.8" width="230.1" height="59.8">
+<defs><style>
+      .st0, .st1 {
+        fill: #c1c1c1;
+        font-family: PFStardustBold, 'PF Stardust Bold';
+        font-size: 46px;
+      }
+
+      .st2 {
+        fill: #d60100;
+      }
+
+      .st3 {
+        fill: #49baba;
+      }
+
+      .st4 {
+        fill: #c0ff88;
+      }
+
+      .st5 {
+        fill: #d8d8d8;
+      }
+
+      .st6 {
+        fill: #b4e2af;
+      }
+
+      .st7 {
+        fill: #fbf1d8;
+      }
+
+      .st8 {
+        fill: #fff;
+        stroke: #fff;
+      }
+
+      .st8, .st9 {
+        stroke-miterlimit: 10;
+      }
+
+      .st9 {
+        stroke: #000;
+      }
+
+      .st1 {
+        letter-spacing: 0em;
+      }
+    </style></defs>
+<g>
+    <path d="M492.9,306.2v-9.2h-23v-4.6h50.6v4.6h-23v9.2h-4.6ZM483.7,329.2v-18.4h4.6v13.8h18.4v4.6h-23ZM492.9,283.2v-9.2h9.2v9.2h-9.2Z" />
+    <path d="M529.8,301.6h50.6v4.6h-23v18.4h-4.6v-18.4h-23v-4.6ZM548.2,287.8v4.6h-4.6v-4.6h4.6ZM552.8,283.2v4.6h-4.6v-4.6h4.6ZM557.4,278.6v4.6h-4.6v-4.6h4.6ZM562,273.9v4.6h-4.6v-4.6h4.6ZM562,287.8h-4.6v-4.6h4.6v4.6ZM566.6,292.4h-4.6v-4.6h4.6v4.6Z" />
+    <path d="M589.6,301.6v-18.4h4.6v4.6h9.2v-4.6h4.6v18.4h-18.4ZM594.2,297h9.2v-4.6h-9.2v4.6ZM608,329.2v-18.4h4.6v4.6h13.8v-4.6h4.6v18.4h-23ZM612.6,324.6h13.8v-4.6h-13.8v4.6ZM626.4,306.2v-32.2h4.6v13.8h13.8v4.6h-13.8v13.8h-4.6Z" />
+    <path d="M649.4,306.2v-4.6h23v-9.2h-9.2v-23h23v4.6h-18.4v4.6h18.4v4.6h-18.4v4.6h18.4v4.6h-9.2v9.2h23v4.6h-50.6ZM672.5,329.2v-9.2h9.2v9.2h-9.2Z" />
+  </g>
+  
+</svg>

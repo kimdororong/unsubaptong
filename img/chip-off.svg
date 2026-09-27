@@ -1,0 +1,789 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="727.9 926.5 174.0 72.0" width="174.0" height="72.0">
+<defs><style>
+      .st0 {
+        font-family: PFStardustBold, 'PF Stardust Bold';
+        font-size: 36px;
+        letter-spacing: 0em;
+      }
+
+      .st1 {
+        fill: #ed4a3f;
+      }
+
+      .st2 {
+        fill: #a86443;
+      }
+
+      .st3 {
+        fill: #f9f8f6;
+      }
+
+      .st4 {
+        fill: #e0e0e0;
+      }
+
+      .st5 {
+        fill: #aa6342;
+      }
+
+      .st6 {
+        fill: #ab6846;
+      }
+
+      .st7 {
+        fill: #ea837c;
+      }
+
+      .st8 {
+        fill: #b66d4c;
+      }
+
+      .st9 {
+        fill: #050505;
+      }
+
+      .st10 {
+        fill: #ec483d;
+      }
+
+      .st11 {
+        fill: #030302;
+      }
+
+      .st12 {
+        fill: #fce2c3;
+      }
+
+      .st13 {
+        fill: #a96342;
+      }
+
+      .st14 {
+        fill: #fcfaf9;
+      }
+
+      .st15 {
+        fill: #0b0808;
+      }
+
+      .st16 {
+        fill: #fcc3b5;
+      }
+
+      .st17 {
+        fill: #b16a47;
+      }
+
+      .st18 {
+        font-family: PFStardust, 'PF Stardust';
+        font-size: 84px;
+      }
+
+      .st19 {
+        fill: #0f0906;
+      }
+
+      .st20 {
+        fill: #f5f4f3;
+      }
+
+      .st21 {
+        fill: #ee4e40;
+      }
+
+      .st22 {
+        fill: #060605;
+      }
+
+      .st23 {
+        fill: #090806;
+      }
+
+      .st24 {
+        fill: #f5f4f2;
+      }
+
+      .st25 {
+        fill: #a96745;
+      }
+
+      .st26 {
+        fill: #f4f1ee;
+      }
+
+      .st27 {
+        fill: #d60100;
+      }
+
+      .st28 {
+        fill: #1c1c1c;
+      }
+
+      .st29 {
+        fill: #030303;
+      }
+
+      .st30 {
+        fill: #fbe5cc;
+      }
+
+      .st31 {
+        fill: #ea837b;
+      }
+
+      .st32 {
+        fill: #ecd7be;
+      }
+
+      .st33 {
+        fill: #ad6946;
+      }
+
+      .st34 {
+        fill: #ba7652;
+      }
+
+      .st35 {
+        fill: #b56f49;
+      }
+
+      .st36 {
+        fill: #050404;
+      }
+
+      .st37 {
+        fill: #1a1a19;
+      }
+
+      .st38 {
+        fill: #a46041;
+      }
+
+      .st39 {
+        fill: #ac6845;
+      }
+
+      .st40 {
+        fill: #110a07;
+      }
+
+      .st41 {
+        fill: #fbf5f1;
+      }
+
+      .st42 {
+        fill: #f8dcbb;
+      }
+
+      .st43 {
+        fill: #ed4c40;
+      }
+
+      .st44 {
+        fill: #b66f4d;
+      }
+
+      .st45 {
+        fill: #af6d4b;
+      }
+
+      .st46 {
+        fill: #080707;
+      }
+
+      .st47 {
+        fill: #f4f3f2;
+      }
+
+      .st48 {
+        fill: #070706;
+      }
+
+      .st49 {
+        fill: #b16947;
+      }
+
+      .st50 {
+        fill: #e97b75;
+      }
+
+      .st51 {
+        fill: #0d0a08;
+      }
+
+      .st52 {
+        fill: #fcccb9;
+      }
+
+      .st53 {
+        fill: #b5724f;
+      }
+
+      .st54 {
+        fill: #f6f4f3;
+      }
+
+      .st55 {
+        fill: #f8f5f2;
+      }
+
+      .st56 {
+        fill: #fccfbb;
+      }
+
+      .st57 {
+        fill: #0a0909;
+      }
+
+      .st58 {
+        fill: #080706;
+      }
+
+      .st59 {
+        fill: #111110;
+      }
+
+      .st60 {
+        fill: #0c0b0b;
+      }
+
+      .st61 {
+        fill: #fcf9f6;
+      }
+
+      .st62 {
+        fill: #e3463a;
+      }
+
+      .st63 {
+        fill: #222120;
+      }
+
+      .st64 {
+        fill: #0d0a09;
+      }
+
+      .st65 {
+        fill: #fcd3c2;
+      }
+
+      .st66 {
+        fill: #0d0b0a;
+      }
+
+      .st67 {
+        fill: #b4e2af;
+      }
+
+      .st68 {
+        fill: #ae6847;
+      }
+
+      .st69 {
+        fill: #fdf6f2;
+      }
+
+      .st70 {
+        fill: #0e0805;
+      }
+
+      .st71 {
+        fill: #0f0c0b;
+      }
+
+      .st72 {
+        fill: #fac027;
+      }
+
+      .st73 {
+        fill: #1a100a;
+      }
+
+      .st74 {
+        fill: #872e25;
+      }
+
+      .st75 {
+        fill: #0b0b0b;
+      }
+
+      .st76 {
+        fill: #b16e4a;
+      }
+
+      .st77 {
+        fill: #e14338;
+      }
+
+      .st78 {
+        fill: #e98a81;
+      }
+
+      .st79 {
+        fill: #a96544;
+      }
+
+      .st80 {
+        fill: #0a0808;
+      }
+
+      .st81 {
+        fill: #fdf5ed;
+      }
+
+      .st82 {
+        fill: #130a06;
+      }
+
+      .st83 {
+        fill: #070505;
+      }
+
+      .st84 {
+        fill: #040404;
+      }
+
+      .st85 {
+        fill: #b16b47;
+      }
+
+      .st86 {
+        fill: #060504;
+      }
+
+      .st87 {
+        fill: #0d0b0b;
+      }
+
+      .st88 {
+        fill: #f2f0ee;
+      }
+
+      .st89 {
+        fill: #0d0c0c;
+      }
+
+      .st90 {
+        fill: #edebea;
+      }
+
+      .st91 {
+        fill: #0c0705;
+      }
+
+      .st92 {
+        fill: #0c0c0b;
+      }
+
+      .st93 {
+        fill: #f7daca;
+      }
+
+      .st94 {
+        fill: #fdbcaf;
+      }
+
+      .st95 {
+        fill: #ab6541;
+      }
+
+      .st96 {
+        fill: #0d0b09;
+      }
+
+      .st97 {
+        fill: #ab6543;
+      }
+
+      .st98 {
+        fill: #2b2928;
+      }
+
+      .st99 {
+        font-family: NeoDunggeunmoPro-Regular, 'NeoDunggeunmo Pro';
+        font-size: 64.8px;
+      }
+
+      .st100 {
+        fill: #f8f7f6;
+      }
+
+      .st101 {
+        fill: #fcf8f4;
+      }
+
+      .st102 {
+        fill: #f4f2f1;
+      }
+
+      .st103 {
+        fill: #040303;
+      }
+
+      .st104 {
+        fill: #a66343;
+      }
+
+      .st105 {
+        fill: #100f0f;
+      }
+
+      .st106 {
+        fill: #fbf1d8;
+      }
+
+      .st107 {
+        fill: #fcf6f2;
+      }
+
+      .st108 {
+        fill: #b36a45;
+      }
+
+      .st109 {
+        fill: #050504;
+      }
+
+      .st110 {
+        fill: #af6c4a;
+      }
+
+      .st111 {
+        fill: #080807;
+      }
+
+      .st112 {
+        fill: #b16b48;
+      }
+
+      .st113 {
+        fill: #fbf1eb;
+      }
+
+      .st114 {
+        fill: #fcf8f7;
+      }
+
+      .st115 {
+        fill: #f8b8ab;
+      }
+
+      .st116 {
+        fill: #fff;
+        stroke: #fff;
+      }
+
+      .st116, .st117 {
+        stroke-miterlimit: 10;
+      }
+
+      .st118 {
+        fill: #f3f1f0;
+      }
+
+      .st119 {
+        fill: #0b0a0a;
+      }
+
+      .st120 {
+        fill: #f8f6f4;
+      }
+
+      .st121 {
+        fill: #f9f7f6;
+      }
+
+      .st117 {
+        fill: none;
+        stroke: #000;
+        stroke-linecap: round;
+        stroke-width: 3px;
+      }
+
+      .st122 {
+        fill: #b97654;
+      }
+
+      .st123 {
+        fill: #ad6a49;
+      }
+
+      .st124 {
+        fill: #ec8880;
+      }
+
+      .st125 {
+        fill: #dfdcd9;
+      }
+
+      .st126 {
+        fill: #fae5cc;
+      }
+
+      .st127 {
+        fill: #f8f5f1;
+      }
+
+      .st128 {
+        fill: #050303;
+      }
+
+      .st129 {
+        fill: #fbf3ed;
+      }
+
+      .st130 {
+        fill: #edece9;
+      }
+
+      .st131 {
+        fill: #efedeb;
+      }
+
+      .st132 {
+        fill: #f9e3cc;
+      }
+
+      .st133 {
+        fill: #fbdfbf;
+      }
+
+      .st134 {
+        fill: #b76f4c;
+      }
+
+      .st135 {
+        fill: #ee5445;
+      }
+
+      .st136 {
+        fill: #f2efed;
+      }
+
+      .st137 {
+        fill: #b87755;
+      }
+
+      .st138 {
+        fill: #0f0f0e;
+      }
+
+      .st139 {
+        fill: #fdfaf6;
+      }
+
+      .st140 {
+        fill: #e14639;
+      }
+
+      .st141 {
+        fill: #e87a73;
+      }
+
+      .st142 {
+        fill: #ef5042;
+      }
+
+      .st143 {
+        fill: #eb8d85;
+      }
+
+      .st144 {
+        fill: #fcf9f5;
+      }
+
+      .st145 {
+        fill: #f7f3f0;
+      }
+
+      .st146 {
+        fill: #090909;
+      }
+
+      .st147 {
+        fill: #e7847c;
+      }
+
+      .st148 {
+        fill: #7f2b24;
+      }
+
+      .st149 {
+        fill: #150d0a;
+      }
+
+      .st150 {
+        fill: #e77975;
+      }
+
+      .st151 {
+        fill: #070606;
+      }
+
+      .st152 {
+        fill: #bd7854;
+      }
+
+      .st153 {
+        fill: #e8e8e8;
+      }
+
+      .st154 {
+        fill: #f5f2ee;
+      }
+
+      .st155 {
+        fill: #ea827b;
+      }
+
+      .st156 {
+        fill: #f3efeb;
+      }
+
+      .st157 {
+        fill: #f8e3ca;
+      }
+
+      .st158 {
+        fill: #fde2c4;
+      }
+
+      .st159 {
+        fill: #0f0805;
+      }
+    </style></defs>
+<polygon class="st153" points="745.9 932.5 745.9 938.5 739.9 938.5 739.9 944.5 733.9 944.5 733.9 980.5 739.9 980.5 739.9 986.5 745.9 986.5 745.9 992.5 883.9 992.5 883.9 986.5 889.9 986.5 889.9 980.5 895.9 980.5 895.9 944.5 889.9 944.5 889.9 938.5 883.9 938.5 883.9 932.5 745.9 932.5" />
+    
+<rect x="739.9" y="932.5" width="6" height="6" />
+    
+<rect x="745.9" y="926.5" width="6" height="6" />
+    
+<rect x="751.9" y="926.5" width="6" height="6" />
+    
+<rect x="757.9" y="926.5" width="6" height="6" />
+    
+<rect x="763.9" y="926.5" width="6" height="6" />
+    
+<rect x="769.9" y="926.5" width="6" height="6" />
+    
+<rect x="775.9" y="926.5" width="6" height="6" />
+    
+<rect x="781.9" y="926.5" width="6" height="6" />
+    
+<rect x="787.9" y="926.5" width="6" height="6" />
+    
+<rect x="793.9" y="926.5" width="6" height="6" />
+    
+<rect x="829.9" y="926.5" width="6" height="6" />
+    
+<rect x="835.9" y="926.5" width="6" height="6" />
+    
+<rect x="865.9" y="926.5" width="6" height="6" />
+    
+<rect x="871.9" y="926.5" width="6" height="6" />
+    
+<rect x="745.9" y="992.5" width="6" height="6" />
+    
+<rect x="751.9" y="992.5" width="6" height="6" />
+    
+<rect x="757.9" y="992.5" width="6" height="6" />
+    
+<rect x="763.9" y="992.5" width="6" height="6" />
+    
+<rect x="769.9" y="992.5" width="6" height="6" />
+    
+<rect x="775.9" y="992.5" width="6" height="6" />
+    
+<rect x="781.9" y="992.5" width="6" height="6" />
+    
+<rect x="787.9" y="992.5" width="6" height="6" />
+    
+<rect x="793.9" y="992.5" width="6" height="6" />
+    
+<rect x="799.9" y="926.5" width="6" height="6" />
+    
+<rect x="817.9" y="926.5" width="6" height="6" />
+    
+<rect x="823.9" y="926.5" width="6" height="6" />
+    
+<rect x="799.9" y="992.5" width="6" height="6" />
+    
+<rect x="805.9" y="926.5" width="6" height="6" />
+    
+<rect x="805.9" y="992.5" width="6" height="6" />
+    
+<rect x="811.9" y="926.5" width="6" height="6" />
+    
+<rect x="811.9" y="992.5" width="6" height="6" />
+    
+<rect x="817.9" y="992.5" width="6" height="6" />
+    
+<rect x="823.9" y="992.5" width="6" height="6" />
+    
+<rect x="829.9" y="992.5" width="6" height="6" />
+    
+<rect x="835.9" y="992.5" width="6" height="6" />
+    
+<rect x="853.9" y="926.5" width="6" height="6" />
+    
+<rect x="859.9" y="926.5" width="6" height="6" />
+    
+<rect x="841.9" y="926.5" width="6" height="6" />
+    
+<rect x="847.9" y="926.5" width="6" height="6" />
+    
+<rect x="841.9" y="992.5" width="6" height="6" />
+    
+<rect x="847.9" y="992.5" width="6" height="6" />
+    
+<rect x="853.9" y="992.5" width="6" height="6" />
+    
+<rect x="859.9" y="992.5" width="6" height="6" />
+    
+<rect x="865.9" y="992.5" width="6" height="6" />
+    
+<rect x="871.9" y="992.5" width="6" height="6" />
+    
+<rect x="877.9" y="926.5" width="6" height="6" />
+    
+<rect x="889.9" y="938.5" width="6" height="6" />
+    
+<rect x="883.9" y="932.5" width="6" height="6" />
+    
+<rect x="895.9" y="944.5" width="6" height="6" />
+    
+<rect x="895.9" y="950.5" width="6" height="6" />
+    
+<rect x="895.9" y="968.5" width="6" height="6" />
+    
+<rect x="895.9" y="974.5" width="6" height="6" />
+    
+<rect x="889.9" y="980.5" width="6" height="6" />
+    
+<rect x="883.9" y="986.5" width="6" height="6" />
+    
+<rect x="733.9" y="938.5" width="6" height="6" />
+    
+<rect x="727.9" y="944.5" width="6" height="6" />
+    
+<rect x="727.9" y="950.5" width="6" height="6" />
+    
+<rect x="895.9" y="956.5" width="6" height="6" />
+    
+<rect x="727.9" y="956.5" width="6" height="6" />
+    
+<rect x="895.9" y="962.5" width="6" height="6" />
+    
+<rect x="727.9" y="962.5" width="6" height="6" />
+    
+<rect x="727.9" y="968.5" width="6" height="6" />
+    
+<rect x="727.9" y="974.5" width="6" height="6" />
+    
+<rect x="733.9" y="980.5" width="6" height="6" />
+    
+<rect x="739.9" y="986.5" width="6" height="6" />
+    
+<rect x="877.9" y="992.5" width="6" height="6" />
+    
+</svg>

@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>운수밥통</title>
+<link rel="icon" href="img/logo-lid.png">
+<!-- 사주 계산 라이브러리 (입춘·절기 기준 지원) -->
+<script src="https://cdn.jsdelivr.net/npm/lunar-javascript@1.7.7/lunar.js"></script>
+<style>
+  /* ── 디자인 값: 여기 숫자와 색만 바꾸면 화면 전체에 반영돼요 ── */
+  :root {
+    /* 색 */
+    --bg: #fff;                  /* 배경 */
+    --text: #111;                /* 기본 글자 */
+    --text-sub: #666;            /* 작은 글자 */
+    --main: #111;                /* 메인 버튼, 선택된 이름 칩, 테두리 */
+    --on-main: #fff;             /* 메인 색 위에 올라가는 글자 */
+    --disabled: #ccc;            /* 꺼진 버튼 */
+    --track: #eee;               /* 막대그래프 바탕, 첫 화면 원 */
+    --dim: rgba(0, 0, 0, 0.2);   /* 창이 뜰 때 뒤 배경 */
+    --screen-bg: #fff;           /* 첫 화면·메인·취사 중 배경 — 색 정하면 여기만 바꾸면 돼요 */
+    --field: #fbf1d8;            /* 이름 칩 */
+    --chip-on: #b4e2af;          /* 선택된 이름 칩 */
+    --alert: #d60100;            /* 날짜 오류 문구 */
+    --placeholder: #b3a07c;      /* 입력칸 예시 글자 (크림색 입력칸에 맞춘 베이지) */
+
+    /* 오행 포인트 색 — 결과 화면의 원에 쓰여요 */
+    --wood: #ddd;    /* 목 */
+    --fire: #ddd;    /* 화 */
+    --earth: #ddd;   /* 토 */
+    --metal: #ddd;   /* 금 */
+    --water: #ddd;   /* 수 */
+
+    /* 폰트 */
+    --font: system-ui, sans-serif;   /* 기본 */
+    --font-title: var(--font);       /* 로고, 날짜, 메뉴 이름 */
+    --font-pixel: "PF Stardust", var(--font);  /* 메인 화면의 바뀌는 글자 (날짜, 이름, 칩) */
+
+    /* 글자 크기 */
+    --size-menu: 44px;    /* 메뉴 이름 — 화면에서 가장 크게 */
+    --size-date: 32px;    /* 입력 화면 날짜 */
+    --size-small: 14px;   /* 작은 글자 */
+
+    /* 간격, 모서리 */
+    --side: 16px;      /* 화면 좌우 여백 */
+    --gap: 12px;       /* 결과 화면 요소 사이 */
+    --radius: 8px;     /* 버튼, 창 모서리 */
+    --circle: 144px;   /* 원 크기 — 아이콘(48px)이 선명하려면 48의 배수로 */
+  }
+
+  /* PF스타더스트 보통(400)·볼드(700) (눈누 웹폰트, 상업용·웹 사용 무료) */
+  @font-face { font-family: "PF Stardust"; src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2506-1@1.0/PFStardust.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+  @font-face { font-family: "PF Stardust"; src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2506-1@1.0/PFStardustBold.woff2") format("woff2"); font-weight: 700; font-display: swap; }
+
+  * { box-sizing: border-box; margin: 0; }
+  [hidden] { display: none !important; }
+  body { font-family: var(--font); color: var(--text); background: var(--bg); word-break: keep-all; } /* 한글을 단어 단위로 줄바꿈 */
+  button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+  input { font: inherit; font-size: 16px; } /* 16px보다 작으면 아이폰이 화면을 확대함 */
+
+  .screen { max-width: 480px; min-height: 100dvh; margin: 0 auto; padding: 24px var(--side); }
+  .center { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--gap); text-align: center; }
+
+  /* 첫 화면·취사 중 그림 — 대지 1170 기준 (218,712)~(952,1488) 영역을 잘라 씀. 두 화면에서 밥솥 위치가 같음 */
+  #splash, #loading { max-width: none; background: var(--screen-bg); }
+  .art { position: relative; width: calc(734 / 1170 * 100vw); max-width: 302px; }
+  .art img { display: block; width: 100%; }
+  .art .cooker { position: absolute; left: 23.98%; top: 32.56%; width: 51.25%; }
+  .art .open { opacity: 0; }
+  .art .steam { position: absolute; left: 0; top: 0; opacity: 0; } /* 김 그림은 영역 전체 크기라 그대로 겹침 */
+  /* 뚜껑 한 번 여닫기 = 앞 절반 닫힘, 뒤 절반 열림 (닫힘/열림 그림을 번갈아 보여줌) */
+  @keyframes lid-shut { 50% { opacity: 0; } }
+  @keyframes lid-open { 50% { opacity: 1; } }
+
+  /* 첫 화면 — design/스플래시.svg. 뚜껑 0.667초 × 3번 = 2초 */
+  #splash .closed { animation: lid-shut 0.667s step-end 3; }
+  #splash .open { animation: lid-open 0.667s step-end 3; }
+
+  /* 취사 중 — design/취사중.svg. 뚜껑 달그락 0.5초 × 6번 = 3초
+     뚜껑이 열릴 때마다 김이 하나씩 생기고, 3개가 차면 모두 사라진 뒤 다시 (1.5초 × 2번) */
+  #loading .closed { animation: lid-shut 0.5s step-end 6; }
+  #loading .open { animation: lid-open 0.5s step-end 6; }
+  #loading .s1 { animation: puff-1 1.5s step-end 2; }
+  #loading .s2 { animation: puff-2 1.5s step-end 2; }
+  #loading .s3 { animation: puff-3 1.5s step-end 2; }
+  @keyframes puff-1 { 16.667% { opacity: 1; } } /* 0.25초: 첫 번째로 뚜껑 열릴 때 */
+  @keyframes puff-2 { 50% { opacity: 1; } }     /* 0.75초: 두 번째 */
+  @keyframes puff-3 { 83.333% { opacity: 1; } } /* 1.25초: 세 번째 */
+
+  /* 메인(입력) 화면 — design/메인페이지.svg. px 값은 대지 값 ÷ 3 */
+  #input { max-width: none; padding: 5px 0 130px; background: var(--screen-bg); text-align: center; font-family: var(--font-pixel); font-weight: 700; } /* 메인 화면 글자는 기본 볼드 */
+  .top img, .add img, .cook img { display: block; }
+  .top { position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .logo-lid { width: 67px; }
+  .logo-text { width: 77px; }
+  .help { position: absolute; top: 1px; right: 28px; width: 44px; height: 44px; padding: 0; display: grid; place-items: center; } /* 그림은 26px, 누르는 곳은 44px */
+  .help img { width: 26px; }
+  .today { margin-top: 34px; font-weight: 400; font-size: 28px; line-height: 40px; } /* PF스타더스트(보통) 84pt, 행간 120pt (메인페이지_수정.svg) ÷ 3 */
+  .add { display: flex; flex-direction: column; align-items: center; margin-top: 16px; } /* + 아래에 열릴 때 */
+  .people:empty ~ .add { margin-top: 73px; } /* 아무도 없을 때(첫 화면): 예전과 같은 자리 */
+  .add label { margin-bottom: 8px; }
+  .label-name { width: 91px; }
+  .label-birth { width: 139px; margin-top: 24px; }
+  .add input { width: 174px; height: 40px; padding: 0 12px; border: 0; background: url(img/input-frame.svg) center / 100% 100%; text-align: center; font-family: var(--font-pixel); color: var(--text); }
+  .add input:focus { outline: none; } /* 누를 때 생기는 테두리 없애기 */
+  .field { position: relative; display: block; }
+  .hint { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; font: 400 13px var(--font-pixel); color: var(--placeholder); } /* 예시 글자: PF스타더스트 보통 39pt ÷ 3. 폰마다 똑같이 보이게 직접 그림 */
+  .add input:focus + .hint, .add input:not(:placeholder-shown) + .hint { display: none; } /* 입력 중이거나 글자가 있으면 숨김 */
+  .add .err { margin-top: 8px; font-size: 14px; color: var(--alert); }
+  .add-btn { margin-top: 30px; padding: 0; }
+  .add-btn img { width: 66px; }
+  .add-btn:disabled { opacity: 0.4; cursor: default; }
+  /* 사람들 — design/메인페이지_수정.svg. 띠 캐릭터 + 이름 칩, 가운데 정렬로 늘어남 */
+  .people { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px 13px; margin: 34px 16px 0; }
+  .people:empty { display: none; } /* 아무도 없으면 자리도 차지하지 않게 */
+  .person { position: relative; }
+  .pick { display: flex; flex-direction: column; align-items: center; padding: 0; } /* 캐릭터나 칩을 누르면 선택/해제 */
+  .pick img { display: block; width: 48px; height: 48px; }
+  .person .color, .person.on .bw { display: none; } /* 선택: 컬러, 선택 안 됨: 흑백 */
+  .person.on .color { display: block; }
+  .chip { margin-top: 2px; height: 24px; padding: 0 24px 0 15px; border: 0 solid; border-image: url(img/chip-off.svg) 24 fill / 8px stretch; font: 700 12px/24px var(--font-pixel); white-space: nowrap; } /* 회색 칩. 이름 길이에 맞춰 가운데만 늘어남 */
+  .person.on .chip { border-image-source: url(img/chip-on.svg); } /* 연두 칩 */
+  .del { position: absolute; right: 0; bottom: -4px; width: 27px; height: 32px; padding: 0; display: grid; place-items: center; } /* × 누르는 곳 */
+  .del img { width: 4.7px; }
+  .plus { display: block; margin: 17px auto 0; width: 44px; height: 44px; padding: 0; } /* 그림은 26px, 누르는 곳은 44px */
+  .plus img { display: block; width: 26px; margin: auto; }
+  .count { margin-top: 5px; font-size: 12px; } /* PF스타더스트 볼드 36pt */
+  .add:not([hidden]) + .count { margin-top: 20px; }
+  .bottom { position: fixed; left: 0; right: 0; bottom: 0; display: flex; justify-content: center; padding: 12px 0 calc(20px + env(safe-area-inset-bottom)); background: var(--screen-bg); }
+  .cook { padding: 0; }
+  .cook img { width: 190px; }
+  .cook .on, .cook:not(:disabled) .off { display: none; } /* 꺼짐: 회색 그림, 켜짐: 빨간 그림 */
+  .cook:not(:disabled) .on { display: block; }
+  .cook:disabled { cursor: default; }
+
+  /* 창 기본값 (도움말·추천 메뉴 팝업이 각자 덮어씀) */
+  dialog { margin: auto; padding: 0; border: 0; background: none; color: #000; }
+
+  /* 추천 메뉴 팝업 — design/추천메뉴.svg(앞면), 추천메뉴_자세히보기.svg(뒷면). px 값은 대지 값 ÷ 3 */
+  @font-face { font-family: "DeltaDotum"; src: url("fonts/DeltaDotumKR.woff2") format("woff2"); font-display: swap; } /* 델타돋움체 (상업용·웹폰트 무료) */
+  #result { width: 371px; max-width: 100%; overflow: visible; }
+  #result::backdrop { background: rgba(0, 0, 0, 0.6); }
+  .res-card { position: relative; height: 580px; background: url(img/result-card.svg) center / 100% 100% no-repeat; }
+  .res-card:focus { outline: none; }
+  /* 흰 카드: 자세히 보기를 누르면 세로 축으로 돌아가며(회전문) 뒤집힘 */
+  .flip { position: absolute; left: 60.7px; top: 161.9px; width: 244px; height: 319.4px; perspective: 900px; }
+  .flip-inner { position: relative; height: 100%; transform-style: preserve-3d; transition: transform 0.7s ease-in-out; }
+  .flip.flipped .flip-inner { transform: rotateY(180deg); }
+  .face { position: absolute; inset: 0; background: url(img/result-white.svg) center / 100% 100% no-repeat; -webkit-backface-visibility: hidden; backface-visibility: hidden; text-align: center; }
+  .face.back { transform: rotateY(180deg); }
+  @media (prefers-reduced-motion: reduce) { .flip-inner { transition: none; } }
+  /* 앞면 — 글자 위치는 디자인의 글자 기준선에 맞춤 */
+  .res-icon { position: absolute; left: 50px; top: 16px; width: 144px; image-rendering: pixelated; } /* 48px 아이콘 × 3 */
+  .res-menu { position: absolute; left: 0; right: 0; top: 164px; font: 700 34px/40px var(--font-pixel); } /* PF스타더스트 볼드 102pt */
+  .res-line { position: absolute; left: 8px; right: 8px; bottom: 39px; font: 20px/26.67px "DeltaDotum", var(--font); white-space: pre-line; } /* 델타돋움 60pt, 줄 간격 80pt. 아래 기준이라 이름이 길어 3줄이 되면 위로 늘어남 */
+  .text-link { position: absolute; left: 0; right: 0; top: 292px; width: max-content; margin: 0 auto; padding: 0; font: 13.33px/16px "DeltaDotum", var(--font); text-decoration: underline; } /* 델타돋움 40pt */
+  /* 뒷면 */
+  .back-title { position: absolute; left: 0; right: 0; top: 19px; font: 400 20px/24px var(--font-pixel); } /* PF스타더스트 보통 60pt */
+  .res-bars { position: absolute; left: 24px; right: 24px; top: 58px; }
+  .bar { display: grid; grid-template-columns: 20px 1fr 20px; gap: 10px; align-items: center; height: 28px; font: 20px/28px "DeltaDotum", var(--font); } /* 델타돋움 60pt */
+  .bar .track { height: 12px; background: var(--field); box-shadow: 0 -2px #000, 0 2px #000, -2px 0 #000, 2px 0 #000; } /* 픽셀 테두리 막대 */
+  .bar i { display: block; height: 100%; background: #608e5a; }
+  .bar.low { color: var(--alert); } /* 가장 부족한 오행은 빨강 */
+  .res-desc { position: absolute; left: 12px; right: 12px; top: 222px; font: 13.33px/18px "DeltaDotum", var(--font); white-space: pre-line; } /* 델타돋움 40pt, 문장마다 줄바꿈 */
+  /* 아래 버튼 — 디자인에서 윤곽선으로 만든 글자까지 통째로 그림(SVG) */
+  .map-btn { position: absolute; left: 60.7px; top: 503.8px; width: 173.3px; }
+  .again-btn { position: absolute; left: 244.7px; top: 503.8px; width: 60px; padding: 0; }
+  .map-btn img, .again-btn img { display: block; width: 100%; }
+
+  /* 도움말 팝업 — design/도움말.svg. 뒤 화면은 어둡게 */
+  #help { width: 326px; max-width: calc(100% - 32px); overflow: visible; }
+  .help-card { position: relative; height: 430px; background: url(img/help-frame.svg) center / 100% 100% no-repeat; } /* 빨간 테두리·매듭·X는 그림, 글자는 웹폰트 */
+  .help-title { position: absolute; left: 0; right: 0; top: 63px; text-align: center; font: 400 24px/36px var(--font-pixel); } /* PF스타더스트 보통 72pt */
+  .help-list { position: absolute; left: 42px; right: 20px; top: 135px; margin: 0; padding: 0; list-style: none; display: grid; gap: 18px; }
+  .help-list li { display: grid; grid-template-columns: 21px 1fr; column-gap: 17px; align-items: start; }
+  .help-list img { display: block; width: 21.3px; margin-top: 2.7px; } /* 번호 상자를 첫 줄 가운데에 */
+  .help-list p { font: 20px/26.67px "DeltaDotum", var(--font); } /* 델타돋움 60pt, 행간 80pt */
+  #help::backdrop { background: rgba(0, 0, 0, 0.6); }
+  #help .close { position: absolute; left: 92.1%; top: 5.3%; width: 44px; height: 44px; margin: 0; padding: 0; border: 0; transform: translate(-50%, -50%); } /* 그림의 X 자리 위에 투명 버튼 */
+</style>
+</head>
+<body>
+
+<!-- 1. 첫 화면: 말풍선·로고 그림 위에 밥솥 두 장(닫힘/열림)을 겹쳐서 번갈아 보여줌 -->
+<section id="splash" class="screen center">
+  <div class="art">
+    <img src="img/splash-words.svg" alt="운수밥통 — 생년월일 알려주면 메뉴 추천해줌">
+    <img class="cooker closed" src="img/cooker-1.png" alt="">
+    <img class="cooker open" src="img/cooker-2.png" alt="">
+  </div>
+</section>
+
+<!-- 2. 메인(입력) 화면 — design/메인페이지.svg -->
+<section id="input" class="screen" hidden>
+  <header class="top">
+    <img class="logo-lid" src="img/logo-lid.png" alt=""> <!-- design/뚜껑.png를 줄인 것 -->
+    <h1><img class="logo-text" src="img/logo-text.svg" alt="운수밥통"></h1>
+    <button id="helpBtn" class="help" aria-label="도움말"><img src="img/help-btn.svg" alt=""></button>
+  </header>
+
+  <p class="today">오늘은<br><span id="today"></span></p>
+
+  <div id="chips" class="people"></div>
+  <button id="plus" class="plus" aria-label="사람 추가" aria-expanded="false" hidden><img src="img/plus-btn.svg" alt=""></button>
+
+  <form id="addForm" class="add">
+    <label for="nameIn"><img class="label-name" src="img/label-name.svg" alt="이름을 입력해 주세요"></label>
+    <span class="field"><input id="nameIn" maxlength="6" placeholder=" " autocomplete="off"><span class="hint" aria-hidden="true">밍맹뭉</span></span>
+    <label for="birthIn"><img class="label-birth" src="img/label-birth.svg" alt="생년월일 8자리를 입력해 주세요"></label>
+    <span class="field"><input id="birthIn" inputmode="numeric" maxlength="10" placeholder=" " autocomplete="off"><span class="hint" aria-hidden="true">1999.03.16</span></span>
+    <p id="birthErr" class="err" hidden>날짜를 다시 확인해주세요</p>
+    <button id="addBtn" class="add-btn" disabled><img src="img/add-btn.svg" alt="등록"></button>
+  </form>
+
+  <p id="count" class="count">0명 선택됨</p>
+
+  <div class="bottom">
+    <button id="cookBtn" class="cook" disabled>
+      <img class="off" src="img/cook-off.svg" alt="밥 지으러 가기">
+      <img class="on" src="img/cook-on.svg" alt="밥 지으러 가기">
+    </button>
+  </div>
+</section>
+
+<!-- 3. 취사 중: 뚜껑 달그락 + 김 하나씩 — design/취사중.svg -->
+<section id="loading" class="screen center" hidden>
+  <div class="art">
+    <img src="img/cooking-text.svg" alt="취사 중...">
+    <img class="cooker closed" src="img/cooker-1.png" alt="">
+    <img class="cooker open" src="img/cooker-2.png" alt="">
+    <img class="steam s1" src="img/steam-1.svg" alt="">
+    <img class="steam s2" src="img/steam-2.svg" alt="">
+    <img class="steam s3" src="img/steam-3.svg" alt="">
+  </div>
+</section>
+
+<!-- 4. 추천 메뉴 팝업 — 흰 카드가 뒤집히며 앞면(추천 메뉴) ↔ 뒷면(오행 분포) -->
+<dialog id="result" aria-label="오늘의 추천 메뉴">
+  <div class="res-card" tabindex="-1" autofocus>
+    <div id="flip" class="flip">
+      <div class="flip-inner">
+        <section id="front" class="face">
+          <img id="resIcon" class="res-icon" alt="">
+          <h1 id="resMenu" class="res-menu"></h1>
+          <p id="resLine" class="res-line"></p>
+          <button id="detailBtn" class="text-link">자세히 보기</button>
+        </section>
+        <section id="back" class="face back" inert>
+          <h2 class="back-title">[오늘의 오행분포]</h2>
+          <div id="bars" class="res-bars"></div>
+          <p id="detailText" class="res-desc"></p>
+          <button id="backBtn" class="text-link">되돌아가기</button>
+        </section>
+      </div>
+    </div>
+    <a id="mapBtn" class="map-btn" target="_blank" rel="noopener"><img src="img/btn-map.svg" alt="지도에서 찾기"></a>
+    <button id="againBtn" class="again-btn"><img src="img/btn-again.svg" alt="다시"></button>
+  </div>
+</dialog>
+
+<!-- 6. 도움말 팝업 — design/도움말.svg -->
+<dialog id="help" aria-labelledby="helpTitle">
+  <div class="help-card">
+    <h2 id="helpTitle" class="help-title">[추천원리]</h2>
+    <ol class="help-list">
+      <li><img src="img/help-num-1.svg" alt=""><p>같이 먹는 사람들의 생년월일로<br>사주를 뽑고, 오늘의 일진을 더한다.</p></li>
+      <li><img src="img/help-num-2.svg" alt=""><p>오행(목·화·토·금·수) 중에서<br>오늘 부족한 기운을 찾는다.</p></li>
+      <li><img src="img/help-num-3.svg" alt=""><p>그 기운을 채우는 맛의 메뉴를<br>추천한다. 같은 멤버, 같은 날이면<br>결과는 바뀌지 않는다.</p></li>
+    </ol>
+  </div>
+  <form method="dialog"><button class="close" aria-label="닫기"></button></form>
+</dialog>
+
+<script>
+  // 운수밥통 메뉴 목록 — 103개 (목 20 · 화 21 · 토 22 · 금 19 · 수 21)
+  // name: 화면에 보이는 이름 / icon: icons 폴더의 파일명 (띄어쓰기 없음)
+  // 각 오행의 맨 앞 5개는 기존 25개 메뉴 순서 그대로 (회덮밥 → 연어덮밥, 매운갈비찜 삭제)
+  const menus = {
+    목: [
+      { name: "쫄면", icon: "목_쫄면.png" },
+      { name: "비빔국수", icon: "목_비빔국수.png" },
+      { name: "비빔냉면", icon: "목_비빔냉면.png" },
+      { name: "샐러드", icon: "목_샐러드.png" },
+      { name: "물회", icon: "목_물회.png" },
+      { name: "물냉면", icon: "목_물냉면.png" },
+      { name: "밀면", icon: "목_밀면.png" },
+      { name: "막국수", icon: "목_막국수.png" },
+      { name: "초계국수", icon: "목_초계국수.png" },
+      { name: "연어덮밥", icon: "목_연어덮밥.png" },
+      { name: "초밥", icon: "목_초밥.png" },
+      { name: "포케", icon: "목_포케.png" },
+      { name: "월남쌈", icon: "목_월남쌈.png" },
+      { name: "분짜", icon: "목_분짜.png" },
+      { name: "팟타이", icon: "목_팟타이.png" },
+      { name: "탕수육", icon: "목_탕수육.png" },
+      { name: "유린기", icon: "목_유린기.png" },
+      { name: "냉채족발", icon: "목_냉채족발.png" },
+      { name: "골뱅이소면", icon: "목_골뱅이소면.png" },
+      { name: "양장피", icon: "목_양장피.png" },
+    ],
+    화: [
+      { name: "제육볶음", icon: "화_제육볶음.png" },
+      { name: "불고기", icon: "화_불고기.png" },
+      { name: "닭갈비", icon: "화_닭갈비.png" },
+      { name: "직화 불백", icon: "화_직화불백.png" },
+      { name: "쭈꾸미볶음", icon: "화_쭈꾸미볶음.png" },
+      { name: "오징어볶음", icon: "화_오징어볶음.png" },
+      { name: "낙지볶음", icon: "화_낙지볶음.png" },
+      { name: "삼겹살 정식", icon: "화_삼겹살.png" },
+      { name: "우삼겹덮밥", icon: "화_우삼겹덮밥.png" },
+      { name: "숯불닭구이", icon: "화_숯불닭구이.png" },
+      { name: "닭꼬치", icon: "화_닭꼬치.png" },
+      { name: "곱창", icon: "화_곱창.png" },
+      { name: "막창", icon: "화_막창.png" },
+      { name: "떡갈비", icon: "화_떡갈비.png" },
+      { name: "고등어구이", icon: "화_고등어구이.png" },
+      { name: "장어덮밥", icon: "화_장어덮밥.png" },
+      { name: "스테이크", icon: "화_스테이크.png" },
+      { name: "수제버거", icon: "화_햄버거.png" },
+      { name: "바비큐 립", icon: "화_바비큐립.png" },
+      { name: "목살스테이크", icon: "화_목살스테이크.png" },
+      { name: "양념갈비", icon: "화_양념갈비.png" },
+    ],
+    토: [
+      { name: "카레", icon: "토_카레.png" },
+      { name: "돈까스", icon: "토_돈까스.png" },
+      { name: "규동", icon: "토_규동.png" },
+      { name: "오므라이스", icon: "토_오므라이스.png" },
+      { name: "돌솥비빔밥", icon: "토_돌솥비빔밥.png" },
+      { name: "비빔밥", icon: "토_비빔밥.png" },
+      { name: "김밥", icon: "토_김밥.png" },
+      { name: "볶음밥", icon: "토_볶음밥.png" },
+      { name: "치킨마요덮밥", icon: "토_치킨마요덮밥.png" },
+      { name: "가츠동", icon: "토_가츠동.png" },
+      { name: "텐동", icon: "토_텐동.png" },
+      { name: "함박스테이크", icon: "토_함박스테이크.png" },
+      { name: "크림파스타", icon: "토_크림파스타.png" },
+      { name: "토마토파스타", icon: "토_토마토파스타.png" },
+      { name: "리조또", icon: "토_리조또.png" },
+      { name: "피자", icon: "토_피자.png" },
+      { name: "샌드위치", icon: "토_샌드위치.png" },
+      { name: "호박죽", icon: "토_호박죽.png" },
+      { name: "떡국", icon: "토_떡국.png" },
+      { name: "만두", icon: "토_만두.png" },
+      { name: "치킨", icon: "토_치킨.png" },
+      { name: "백반", icon: "토_백반.png" },
+    ],
+    금: [
+      { name: "마라탕", icon: "금_마라탕.png" },
+      { name: "짬뽕", icon: "금_짬뽕.png" },
+      { name: "매운 칼국수", icon: "금_매운칼국수.png" },
+      { name: "떡볶이", icon: "금_떡볶이.png" },
+      { name: "마라샹궈", icon: "금_마라샹궈.png" },
+      { name: "라볶이", icon: "금_라볶이.png" },
+      { name: "로제떡볶이", icon: "금_로제떡볶이.png" },
+      { name: "닭볶음탕", icon: "금_닭볶음탕.png" },
+      { name: "낙곱새", icon: "금_낙곱새.png" },
+      { name: "불족발", icon: "금_불족발.png" },
+      { name: "부대찌개", icon: "금_부대찌개.png" },
+      { name: "육개장", icon: "금_육개장.png" },
+      { name: "순두부찌개", icon: "금_순두부찌개.png" },
+      { name: "감자탕", icon: "금_감자탕.png" },
+      { name: "매운탕", icon: "금_매운탕.png" },
+      { name: "아귀찜", icon: "금_아귀찜.png" },
+      { name: "탄탄면", icon: "금_탄탄면.png" },
+      { name: "마파두부덮밥", icon: "금_마파두부덮밥.png" },
+      { name: "깐풍기", icon: "금_깐풍기.png" },
+    ],
+    수: [
+      { name: "국밥", icon: "수_국밥.png" },
+      { name: "김치찌개", icon: "수_김치찌개.png" },
+      { name: "된장찌개", icon: "수_된장찌개.png" },
+      { name: "쌀국수", icon: "수_쌀국수.png" },
+      { name: "짜장면", icon: "수_짜장면.png" },
+      { name: "순대국", icon: "수_순대국.png" },
+      { name: "돼지국밥", icon: "수_돼지국밥.png" },
+      { name: "설렁탕", icon: "수_설렁탕.png" },
+      { name: "곰탕", icon: "수_곰탕.png" },
+      { name: "갈비탕", icon: "수_갈비탕.png" },
+      { name: "삼계탕", icon: "수_삼계탕.png" },
+      { name: "칼국수", icon: "수_칼국수.png" },
+      { name: "수제비", icon: "수_수제비.png" },
+      { name: "우동", icon: "수_우동.png" },
+      { name: "라멘", icon: "수_라멘.png" },
+      { name: "소바", icon: "수_소바.png" },
+      { name: "콩국수", icon: "수_콩국수.png" },
+      { name: "청국장", icon: "수_청국장.png" },
+      { name: "해장국", icon: "수_해장국.png" },
+      { name: "간장게장", icon: "수_간장게장.png" },
+      { name: "샤브샤브", icon: "수_샤브샤브.png" },
+    ],
+  };
+  // 결과 한 줄 해석: "오늘 우리는 ○ 기운이 부족해요. ___ 채워줘요."
+  const fills = { 목: "새콤한 맛이", 화: "불맛이", 토: "든든한 곡물과 단맛이", 금: "매운맛이", 수: "짭짤한 국물이" };
+  // 오행이 고루 조화로운 날 (부족한 기운 없음 → 백반)
+  const balanced = {
+    line: "오행이 고루 조화로워요.\n골고루 차린 백반이 딱이에요.",
+    desc: "다섯 기운이 고루 갖춰진 날이에요.\n어느 쪽도 모자라지 않아요.\n골고루 차린 한 상으로 균형 유지!",
+  };
+  // 자세히 보기: 부족한 오행 설명 (\n = 줄바꿈, 마침표마다)
+  const descs = {
+    목: "목은 나무의 기운, 새로 시작하는 힘이에요.\n오늘은 이게 모자라 시작이 굼떠요.\n새콤한 맛으로 깨워요.",
+    화: "화는 불의 기운, 의욕과 열정 담당이에요.\n오늘은 불씨가 약해요.\n불맛으로 확 지펴요.",
+    토: "토는 흙의 기운, 중심을 잡아주는 힘이에요.\n오늘은 마음이 붕 떠 있어요.\n든든한 곡물과 단맛으로 눌러줘요.",
+    금: "금은 쇠의 기운, 딱 끊고 정리하는 힘이에요.\n오늘은 자꾸 흐지부지돼요.\n매운맛으로 정신 번쩍!",
+    수: "수는 물의 기운, 차분히 쉬고 모으는 힘이에요.\n오늘은 바싹 말라 있어요.\n짭짤한 국물로 촉촉하게.",
+  };
+
+  const $ = (id) => document.getElementById(id);
+  const chips = $("chips"), plus = $("plus"), addForm = $("addForm");
+  const nameIn = $("nameIn"), birthIn = $("birthIn"), addBtn = $("addBtn"), birthErr = $("birthErr");
+
+  // 명단 저장/읽기. 저장이 막힌 환경(사생활 보호 모드 등)이어도 앱은 그대로 동작
+  const KEY = "unsubaptong.people";
+  function loadPeople() {
+    try {
+      const list = JSON.parse(localStorage.getItem(KEY));
+      return Array.isArray(list) ? list : [];
+    } catch {
+      return [];
+    }
+  }
+  function savePeople() {
+    try {
+      localStorage.setItem(KEY, JSON.stringify(people));
+    } catch {}
+  }
+
+  let people = loadPeople();  // 명단: { name, birth }
+  const selected = new Set(); // 오늘 먹는 사람들
+
+  function show(id) {
+    document.querySelectorAll(".screen").forEach((s) => (s.hidden = s.id !== id));
+  }
+
+  // 오늘 날짜
+  function today() {
+    return new Date();
+  }
+
+  // 8자리 + 실제로 있는 날짜(19950231 X) + 1900년 ~ 오늘
+  function isValidBirth(s) {
+    if (!/^\d{8}$/.test(s)) return false;
+    const y = +s.slice(0, 4), m = +s.slice(4, 6), d = +s.slice(6, 8);
+    const date = new Date(y, m - 1, d);
+    return date.getFullYear() === y && date.getMonth() === m - 1 && date.getDate() === d
+      && y >= 1900 && date <= new Date();
+  }
+
+  // 글자 → 오행 (천간 10글자 + 지지 12글자)
+  const OHENG = {
+    甲: "목", 乙: "목", 丙: "화", 丁: "화", 戊: "토", 己: "토", 庚: "금", 辛: "금", 壬: "수", 癸: "수",
+    寅: "목", 卯: "목", 巳: "화", 午: "화", 申: "금", 酉: "금", 亥: "수", 子: "수", 辰: "토", 戌: "토", 丑: "토", 未: "토",
+  };
+
+  // 생년월일 → [년주, 월주, 일주] (한자 2글자씩). 입춘·절기 경계는 라이브러리가 처리
+  // ponytail: 태어난 시간을 모르니 낮 12시로 계산. 절기가 바뀌는 바로 그날 태어난 사람만 결과가 갈릴 수 있음
+  function saju(birth) {
+    const y = +birth.slice(0, 4), m = +birth.slice(4, 6), d = +birth.slice(6, 8);
+    const e = Solar.fromYmdHms(y, m, d, 12, 0, 0).getLunar().getEightChar();
+    return [e.getYear(), e.getMonth(), e.getDay()];
+  }
+
+  // 멤버 + 날짜 → 오행 개수, 부족한 오행, 메뉴. 랜덤 없음: 같은 멤버·같은 날이면 항상 같은 결과
+  function recommend(members, date = new Date()) {
+    const dayNum = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) / 86400000; // 1970.1.1부터 며칠째
+    const today = Solar.fromDate(date).getLunar().getDayInGanZhi(); // 오늘 일진 2글자
+
+    // 1인당 사주 6글자 + 일진 2글자 = 8글자씩 세기
+    const counts = { 목: 0, 화: 0, 토: 0, 금: 0, 수: 0 };
+    for (const p of members) {
+      for (const c of saju(p.birth).join("") + today) counts[OHENG[c]]++;
+    }
+
+    // 오행이 고루 조화로우면(가장 많은 것과 가장 적은 것의 차이가 1 이하) 부족한 기운 없이 백반
+    const values = Object.values(counts);
+    if (Math.max(...values) - Math.min(...values) <= 1) {
+      return { counts, lack: null, menu: menus.토.find((m) => m.name === "백반") };
+    }
+
+    // 부족한 등수: 개수가 가장 적은 오행들 = 1등, 그다음으로 적은 오행들 = 2등
+    const levels = [...new Set(Object.values(counts))].sort((a, b) => a - b);
+    // 짝수 날은 1등, 홀수 날은 2등을 씀 (나오는 메뉴가 한두 오행에 몰리지 않게)
+    const level = levels[Math.min(dayNum % 2, levels.length - 1)];
+    // 같은 등수가 여럿이면 날짜로 돌려가며 하나 (랜덤 금지)
+    const same = Object.keys(counts).filter((el) => counts[el] === level);
+    const lack = same[dayNum % same.length];
+
+    // 메뉴 순번 = (날짜 + 생년월일 숫자들의 합) ÷ 메뉴 개수의 나머지 → 다음 날엔 다음 메뉴
+    const memberNum = members.reduce((sum, p) => sum + Number(p.birth), 0);
+    const list = menus[lack];
+    return { counts, lack, menu: list[(dayNum + memberNum) % list.length] };
+  }
+
+  // 띠: 사주 년주의 두 번째 글자(입춘 기준) → 십이지 캐릭터 그림 이름, 한글 이름
+  const ZODIAC = {
+    子: ["rat", "쥐"], 丑: ["ox", "소"], 寅: ["tiger", "호랑이"], 卯: ["rabbit", "토끼"], 辰: ["dragon", "용"], 巳: ["snake", "뱀"],
+    午: ["horse", "말"], 未: ["sheep", "양"], 申: ["monkey", "원숭이"], 酉: ["rooster", "닭"], 戌: ["dog", "개"], 亥: ["pig", "돼지"],
+  };
+  function zodiac(birth) {
+    // 사주 도구를 못 불러왔으면 양력 해로 대신 (2020년 = 쥐)
+    const branch = window.Solar ? saju(birth)[0][1] : "申酉戌亥子丑寅卯辰巳午未"[+birth.slice(0, 4) % 12];
+    return ZODIAC[branch];
+  }
+
+  // 사람 하나: 띠 캐릭터 + [이름 ×]
+  function makeChip(p) {
+    const [animal, animalKo] = zodiac(p.birth);
+    const person = document.createElement("div");
+    person.className = selected.has(p) ? "person on" : "person";
+
+    const pick = document.createElement("button");
+    pick.className = "pick";
+    pick.setAttribute("aria-pressed", selected.has(p));
+    pick.innerHTML = `<img class="color" src="img/zodiac/${animal}.png" alt="${animalKo}띠">` +
+                     `<img class="bw" src="img/zodiac/${animal}-bw.png" alt="${animalKo}띠"><span class="chip"></span>`;
+    pick.querySelector(".chip").textContent = p.name; // 이름은 글자로만 넣기
+    pick.onclick = () => {
+      if (selected.has(p)) selected.delete(p);
+      else selected.add(p);
+      renderRoster();
+    };
+
+    const del = document.createElement("button");
+    del.className = "del";
+    del.innerHTML = '<img src="img/x.svg" alt="">';
+    del.setAttribute("aria-label", `${p.name} 명단에서 삭제`);
+    del.onclick = () => {
+      people = people.filter((q) => q !== p);
+      selected.delete(p);
+      savePeople();
+      renderRoster();
+    };
+
+    person.append(pick, del);
+    return person;
+  }
+
+  // 명단 다시 그리기 (추가/선택/삭제 할 때마다 호출)
+  function renderRoster() {
+    chips.replaceChildren(...people.map(makeChip));
+    plus.hidden = people.length === 0;              // 첫 사람 등록 뒤부터 + 버튼
+    if (people.length === 0) addForm.hidden = false; // 아무도 없으면 입력칸은 늘 보임
+    plus.setAttribute("aria-expanded", !addForm.hidden);
+    $("count").textContent = `${selected.size}명 선택됨`;
+    $("cookBtn").disabled = selected.size === 0;
+  }
+
+  // 입력 검사: 이름 있음 + 생년월일 올바름 → 추가 버튼 켜기
+  // 생년월일 칸에서 숫자 8자리만 꺼내기 (화면에는 1999.03.16처럼 점이 들어가 있음)
+  function birthDigits() {
+    return birthIn.value.replace(/\D/g, "").slice(0, 8);
+  }
+
+  function checkForm() {
+    const b = birthDigits();
+    birthIn.value = [b.slice(0, 4), b.slice(4, 6), b.slice(6)].filter(Boolean).join("."); // 년.월.일 점 자동으로
+    const ok = isValidBirth(b);
+    // 아직 치는 중(8자리 전)이면 안내 문구는 참기
+    const typing = b.length < 8 && document.activeElement === birthIn;
+    birthErr.hidden = ok || b === "" || typing;
+    addBtn.disabled = !ok || nameIn.value.trim() === "";
+  }
+
+  // 흰 카드 뒤집기: true = 뒷면(오행 분포), false = 앞면(추천 메뉴)
+  function flip(toBack) {
+    $("flip").classList.toggle("flipped", toBack);
+    $("front").inert = toBack; // 안 보이는 면의 버튼은 못 누르게
+    $("back").inert = !toBack;
+  }
+
+  function showResult() {
+    const members = people.filter((p) => selected.has(p)); // 명단 순서대로 (선택 순서 무관)
+    const date = today();
+    const { counts, lack, menu } = recommend(members, date);
+
+    const who = members.length === 1 ? `${members[0].name}님은` : "우리는";
+    $("resIcon").src = `icons/메뉴/${menu.icon}`;
+    $("resMenu").textContent = `[${menu.name}]`;
+    $("resLine").textContent = lack ? `오늘 ${who} ${lack} 기운이 부족해요.\n${fills[lack]} 채워줘요.` : `오늘 ${who} ${balanced.line}`;
+    $("mapBtn").href = "https://map.naver.com/p/search/" + encodeURIComponent(menu.name);
+
+    const max = Math.max(...Object.values(counts));
+    $("bars").replaceChildren(...Object.entries(counts).map(([el, n]) => {
+      const row = document.createElement("div");
+      row.className = el === lack ? "bar low" : "bar";
+      row.innerHTML = `<span>${el}</span><div class="track"><i style="width:${(n / max) * 100}%"></i></div><span>${n}</span>`;
+      return row;
+    }));
+    $("detailText").textContent = lack ? descs[lack] : balanced.desc;
+
+  }
+
+  // ── 버튼 연결 ──
+  nameIn.oninput = checkForm;
+  birthIn.oninput = checkForm;
+  birthIn.onblur = checkForm;
+  addForm.onsubmit = (e) => {
+    e.preventDefault();
+    if (addBtn.disabled) return;
+    const p = { name: nameIn.value.trim(), birth: birthDigits() }; // 저장은 점 없이 8자리
+    people.push(p);
+    savePeople();
+    selected.add(p); // 방금 추가한 사람은 바로 선택
+    addForm.reset();
+    checkForm();
+    addForm.hidden = true; // 등록하면 입력칸은 숨기고 + 버튼으로
+    renderRoster();
+  };
+  plus.onclick = () => {
+    addForm.hidden = !addForm.hidden; // + 누르면 입력칸 열기/닫기
+    renderRoster();
+    if (!addForm.hidden) nameIn.focus();
+  };
+  $("cookBtn").onclick = () => {
+    if (!window.Solar) {
+      alert("사주 계산 도구를 불러오지 못했어요. 인터넷 연결을 확인하고 새로고침해주세요.");
+      return;
+    }
+    show("loading");
+    setTimeout(() => {
+      showResult();
+      flip(false);
+      show("input");
+      $("result").showModal(); // 메인 화면 위에 팝업으로
+    }, 3000); // 취사 중 모션(뚜껑 6번) 3초
+  };
+  $("againBtn").onclick = () => $("result").close(); // 팝업 닫고 메인으로, 선택 상태는 그대로
+  $("detailBtn").onclick = () => flip(true);
+  $("backBtn").onclick = () => flip(false);
+  $("helpBtn").onclick = () => $("help").showModal();
+  $("help").onclick = (e) => { if (e.target === e.currentTarget) e.currentTarget.close(); }; // 어두운 바깥을 눌러도 닫힘
+
+  // ── 시작 ──
+  const now = today();
+  const two = (n) => String(n).padStart(2, "0");
+  $("today").textContent = `${two(now.getMonth() + 1)}월 ${two(now.getDate())}일 ${"일월화수목금토"[now.getDay()]}요일`;
+  addForm.hidden = people.length > 0; // 이전 기록이 있으면 입력칸 없이 + 버튼으로 시작
+  renderRoster();
+  setTimeout(() => show("input"), 2000); // 밥솥 뚜껑 3번 여닫고(2초) 입력 화면으로
+</script>
+</body>
+</html>

@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="218 712 734 776" width="734" height="776">
+<defs><style>
+      .st0 {
+        fill: #49baba;
+      }
+
+      .st1 {
+        stroke: #000;
+        stroke-miterlimit: 10;
+        stroke-width: .5px;
+      }
+
+      .st2 {
+        fill: #fff;
+      }
+    </style></defs>
+<g>
+    <rect x="707.2" y="920.3" width="5.4" height="5.4" />
+    <rect x="712.6" y="914.9" width="5.4" height="5.4" />
+    <rect x="717.9" y="914.9" width="5.4" height="5.4" />
+    <rect x="712.6" y="931" width="5.4" height="5.4" />
+    <rect x="717.9" y="931" width="5.4" height="5.4" />
+    <rect x="707.2" y="925.6" width="5.4" height="5.4" />
+    <rect x="723.3" y="920.3" width="5.4" height="5.4" />
+    <rect x="723.3" y="925.6" width="5.4" height="5.4" />
+    <rect class="st2" x="712.6" y="920.3" width="10.7" height="10.7" />
+  </g>
+  
+</svg>

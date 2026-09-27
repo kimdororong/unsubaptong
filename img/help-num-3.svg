@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="222.8 1540.8 63.9 64" width="63.9" height="64">
+<defs><style>
+      .st0 {
+        fill: #e03f3f;
+      }
+
+      .st0, .st1, .st2 {
+        stroke-width: 6px;
+      }
+
+      .st0, .st1, .st2, .st3, .st4, .st5 {
+        stroke: #000;
+      }
+
+      .st0, .st1, .st2, .st4, .st5 {
+        stroke-miterlimit: 10;
+      }
+
+      .st1, .st6 {
+        fill: #fff;
+      }
+
+      .st2 {
+        fill: #d4ddda;
+      }
+
+      .st7 {
+        fill: #fbf1d8;
+      }
+
+      .st3 {
+        stroke-width: 1.2px;
+      }
+
+      .st8 {
+        fill: #f44242;
+      }
+
+      .st4 {
+        stroke-width: 4px;
+      }
+
+      .st4, .st5 {
+        fill: #b4e2af;
+      }
+
+      .st5 {
+        stroke-width: 5px;
+      }
+    </style></defs>
+<g>
+      <g>
+        <rect class="st5" x="225.2" y="1543.2" width="59.2" height="59.2" />
+        <path d="M243.9,1558.5h21.6v29.7h-21.6v-4.3h16.9v-9.8h-14.1v-4.4h14.1v-6.9h-16.9v-4.4Z" />
+      </g>
+      <g>
+        <rect class="st6" x="282.2" y="1540.8" width="4.5" height="4.7" />
+        <rect class="st6" x="222.8" y="1540.8" width="4.5" height="4.7" />
+        <rect class="st6" x="282.2" y="1600.1" width="4.5" height="4.7" />
+        <rect class="st6" x="222.8" y="1600.1" width="4.5" height="4.7" />
+      </g>
+    </g>
+    
+</svg>
