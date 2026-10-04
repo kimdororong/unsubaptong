@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#D5E8FF">
+<title>운수밥통</title>
+<!-- 사주 계산 라이브러리 (입춘·절기 기준 지원) -->
+<script src="https://cdn.jsdelivr.net/npm/lunar-javascript@1.7.7/lunar.js"></script>
+<!-- 폰트: 제목·부적 한자 모두 굵은 명조 -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@900&display=swap" rel="stylesheet">
+<style>
+  /* ── 디자인 값: 여기 숫자와 색만 바꾸면 화면 전체에 반영돼요 ── */
+  /* 컨셉: 하늘색 바탕 + 90년대 빨간 압력밥솥 + 노란 부적과 빨간 먹 */
+  :root {
+    /* 색 */
+    --bg: #D5E8FF;                   /* 배경 (하늘색) */
+    --text: #1C1A22;                 /* 기본 글자 */
+    --text-sub: #44506A;             /* 작은 글자 */
+    --main: #D7263D;                 /* 메인 버튼, 선택된 이름 칩, 부적 테두리 (밥솥 빨강) */
+    --on-main: #FFFFFF;              /* 메인 색 위에 올라가는 글자 */
+    --disabled: #AFC4DE;             /* 꺼진 버튼 */
+    --track: #BDD6F4;                /* 막대그래프 바탕, 사람 추가 칸 */
+    --dim: rgba(18, 30, 60, 0.35);   /* 창이 뜰 때 뒤 배경 */
+    --paper: #F7D046;                /* 부적 종이 (노랑) */
+    --field: #FFFFFF;                /* 입력칸, 이름 칩 */
+
+    /* 오행 포인트 색 — 결과 화면의 원, 자세히 보기 막대에 쓰여요 */
+    --wood: #3C8A5E;    /* 목 */
+    --fire: #E4572E;    /* 화 */
+    --earth: #B97F1F;   /* 토 */
+    --metal: #8C9097;   /* 금 */
+    --water: #2D4B7C;   /* 수 */
+
+    /* 폰트 */
+    --font: -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;  /* 기본 */
+    --font-title: "Noto Serif KR", serif;          /* 로고, 날짜, 메뉴 이름, 버튼 */
+    --font-seal: "Noto Serif KR", serif;           /* 부적 한자 */
+
+    /* 글자 크기 */
+    --size-menu: 52px;    /* 메뉴 이름 — 화면에서 가장 크게 */
+    --size-date: 44px;    /* 입력 화면 날짜 */
+    --size-small: 14px;   /* 작은 글자 */
+
+    /* 간격, 모서리 */
+    --side: 20px;      /* 화면 좌우 여백 */
+    --gap: 14px;       /* 결과 화면 요소 사이 */
+    --radius: 12px;    /* 버튼, 창 모서리 */
+    --circle: 144px;   /* 아이콘 원 크기 — 아이콘(48px)이 선명하려면 48의 배수로 */
+  }
+
+  * { box-sizing: border-box; margin: 0; }
+  [hidden] { display: none !important; }
+  body { font-family: var(--font); color: var(--text); background: var(--bg); word-break: keep-all; -webkit-tap-highlight-color: transparent; } /* 한글을 단어 단위로 줄바꿈 */
+  button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+  input { font: inherit; font-size: 16px; } /* 16px보다 작으면 아이폰이 화면을 확대함 */
+  :focus-visible { outline: 2px solid var(--main); outline-offset: 2px; }
+
+  .screen { max-width: 480px; min-height: 100dvh; margin: 0 auto; padding: 24px var(--side); }
+  .center { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--gap); text-align: center; }
+  .small { font-size: var(--size-small); color: var(--text-sub); }
+  .primary { display: block; width: 100%; padding: 17px; border-radius: var(--radius); background: var(--main); color: var(--on-main); font-family: var(--font-title); font-weight: 900; font-size: 20px; text-align: center; text-decoration: none; box-shadow: 0 4px 0 var(--text); transition: transform 0.08s, box-shadow 0.08s; }
+  .primary:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 1px 0 var(--text); }
+  .primary:disabled { background: var(--disabled); color: var(--bg); box-shadow: none; cursor: default; }
+
+  /* 밥통 캐릭터 */
+  .bap { display: block; overflow: visible; }
+  .steam path { animation: steam 2s ease-in-out infinite; transform-box: fill-box; transform-origin: bottom; }
+  .steam path:nth-child(2) { animation-delay: 0.3s; }
+  .steam path:nth-child(3) { animation-delay: 0.6s; }
+  @keyframes steam { 0%, 100% { opacity: 0.25; transform: translateY(4px) scaleY(0.8); } 50% { opacity: 1; transform: translateY(-4px) scaleY(1.05); } }
+  .rattle { animation: rattle 0.35s ease-in-out infinite; }
+  @keyframes rattle { 0%, 100% { transform: rotate(-2deg); } 50% { transform: rotate(2deg) translateY(-2px); } }
+  @media (prefers-reduced-motion: reduce) { .steam path, .rattle { animation: none; } }
+
+  /* 1. 첫 화면 */
+  .logo-big { font-family: var(--font-title); font-weight: 900; font-size: 52px; color: var(--main); letter-spacing: -0.01em; line-height: 1; margin-top: 4px; }
+
+  /* 2. 입력 화면 */
+  #input { padding-bottom: 130px; text-align: center; } /* 하단 고정 버튼에 내용이 가리지 않게 */
+  .top { position: relative; display: flex; justify-content: center; align-items: center; gap: 6px; font-family: var(--font-title); font-weight: 900; font-size: 22px; color: var(--main); }
+  .top .bap { width: 30px; height: 30px; }
+  .help { position: absolute; right: 0; top: 50%; transform: translateY(-50%); width: 34px; height: 34px; border: 2px solid var(--main); border-radius: 50%; color: var(--main); font-family: var(--font-title); font-weight: 900; font-size: 17px; }
+  .today { font-family: var(--font-title); font-weight: 900; font-size: var(--size-date); line-height: 1; margin: 28px 0 8px; }
+  .tagline { margin-bottom: 36px; }
+  .label { display: flex; align-items: center; gap: 10px; font-size: var(--size-small); font-weight: 700; color: var(--main); }
+  .label::before, .label::after { content: ""; flex: 1; border-top: 1.5px dashed var(--main); opacity: 0.5; }
+  .chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 18px 0 16px; }
+  .chip { display: inline-flex; align-items: center; min-height: 44px; border: 2px solid var(--text); border-radius: 999px; background: var(--field); font-weight: 700; }
+  .chip.on { background: var(--main); border-color: var(--main); color: var(--on-main); }
+  .chip .name { min-height: 40px; padding: 0 4px 0 16px; }
+  .chip .del { min-height: 40px; padding: 0 14px 0 6px; font-size: 15px; opacity: 0.6; }
+  #plus { padding: 0 18px; border-style: dashed; background: none; font-size: 20px; font-weight: 400; }
+  .add { display: grid; grid-template-columns: auto 1fr auto 1.2fr auto; gap: 6px; align-items: center; margin-bottom: 14px; padding: 12px; border-radius: var(--radius); background: var(--track); font-size: var(--size-small); font-weight: 700; }
+  .add input { width: 100%; min-width: 0; padding: 9px 7px; border: 2px solid var(--text); border-radius: 8px; background: var(--field); color: var(--text); }
+  .add input::placeholder { color: var(--disabled); font-size: 13px; } /* 좁은 폰에서 YYYYMMDD가 잘리지 않게 */
+  .add button { padding: 10px 12px; border-radius: 8px; background: var(--text); color: var(--on-main); }
+  .add button:disabled { background: var(--disabled); cursor: default; }
+  .add .err { grid-column: 1 / -1; color: var(--main); }
+  .bottom { position: fixed; left: 0; right: 0; bottom: 0; max-width: 480px; margin: 0 auto; padding: 16px var(--side) calc(20px + env(safe-area-inset-bottom)); background: linear-gradient(transparent, var(--bg) 30%); }
+
+  /* 3. 로딩 */
+  .loading-title { font-family: var(--font-title); font-weight: 900; font-size: 28px; }
+
+  /* 4. 결과 화면 */
+  .status { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 999px; background: var(--text); color: #A8E6A1; font-size: 13px; font-weight: 700; letter-spacing: 0.04em; }
+  .status::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #6BE06B; box-shadow: 0 0 6px #6BE06B; }
+  .card { position: relative; width: 100%; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 24px 22px 26px; background: var(--paper); border: 3px solid var(--main); outline: 1.5px solid var(--main); outline-offset: -10px; border-radius: 3px; }
+  .card-head { font-family: var(--font-seal); font-weight: 900; font-size: 15px; color: var(--main); letter-spacing: 0.6em; padding-left: 0.6em; }
+  .card .small { color: var(--text); font-weight: 600; }
+  .card .ask { color: var(--main); font-weight: 800; margin-top: 4px; }
+  .line { line-height: 1.5; font-size: 15px; }
+  .circle { width: var(--circle); height: var(--circle); margin: 6px 0 2px; border-radius: 50%; background: var(--point, var(--track)); color: var(--on-main); display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1; box-shadow: 0 0 0 4px var(--paper), 0 0 0 6.5px var(--text); }
+  .circle img { width: 100%; height: 100%; image-rendering: pixelated; } /* 픽셀 아이콘을 흐리지 않게 */
+  .menu { font-family: var(--font-title); font-weight: 900; font-size: min(var(--size-menu), 13vw); line-height: 1.1; } /* 13vw: 6글자 메뉴(치킨마요덮밥 등)도 좁은 폰에서 카드 안에 들어가게 */
+  .seal { position: absolute; top: -14px; right: -10px; width: 50px; height: 50px; display: grid; place-items: center; border-radius: 6px; background: var(--main); color: var(--on-main); font-family: var(--font-seal); font-weight: 900; font-size: 13px; line-height: 1.15; transform: rotate(8deg); border: 2px solid var(--on-main); outline: 2px solid var(--main); }
+  #mapBtn { margin-top: 6px; }
+  .subs { display: flex; gap: 28px; }
+  .subs button { padding: 8px; font-size: 15px; font-weight: 700; text-decoration: underline; text-underline-offset: 4px; color: var(--text-sub); }
+
+  /* 5, 6. 자세히 보기 / 도움말 창 */
+  dialog { margin: auto; width: min(340px, calc(100% - 40px)); padding: 26px 22px 22px; border: 3px solid var(--main); outline: 1.5px solid var(--main); outline-offset: -9px; border-radius: 3px; background: var(--bg); color: var(--text); }
+  dialog::backdrop { background: var(--dim); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+  dialog h2 { font-family: var(--font-title); font-weight: 900; font-size: 22px; text-align: center; margin-bottom: 18px; }
+  dialog p, dialog li { line-height: 1.65; font-size: 15px; }
+  dialog ol { list-style: none; padding: 0; counter-reset: n; display: grid; gap: 12px; }
+  dialog li { counter-increment: n; display: grid; grid-template-columns: 26px 1fr; gap: 8px; }
+  dialog li::before { content: counter(n); width: 24px; height: 24px; margin-top: 1px; border-radius: 50%; background: var(--main); color: var(--on-main); display: grid; place-items: center; font-family: var(--font-title); font-weight: 900; font-size: 14px; }
+  dialog form button { display: block; width: 100%; margin-top: 22px; padding: 13px; border-radius: var(--radius); background: var(--text); color: var(--on-main); font-weight: 700; }
+  .bar { display: grid; grid-template-columns: 28px 1fr 20px; gap: 10px; align-items: center; margin: 8px 0; font-weight: 700; }
+  .bar span:first-child { width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%; }
+  .bar.low span:first-child { background: var(--main); color: var(--on-main); }
+  .bar .track { height: 12px; border-radius: 6px; background: var(--track); overflow: hidden; }
+  .bar i { display: block; height: 100%; border-radius: 6px; }
+  .bar span:last-child { text-align: right; }
+  #detailText { margin-top: 18px; padding-top: 16px; border-top: 1.5px dashed var(--disabled); }
+  .debug { margin-top: 12px; white-space: pre-line; font-size: 12px; color: var(--text-sub); } /* 검증용 (검증 끝나면 삭제) */
+</style>
+</head>
+<body>
+
+<!-- 밥통 그림: 90년대 빨간 전기압력밥솥 (여러 화면에서 <use href="#bap">로 재사용) -->
+<svg width="0" height="0" style="position: absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="shell" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#E8465C"/>
+      <stop offset="1" stop-color="#A5152D"/>
+    </linearGradient>
+  </defs>
+  <symbol id="bap" viewBox="0 0 200 200">
+    <!-- 김 -->
+    <g class="steam" fill="none" stroke="#9EB4D0" stroke-width="5" stroke-linecap="round">
+      <path d="M84 24 q-7 -6 0 -12 q7 -6 0 -12"/>
+      <path d="M100 20 q-7 -6 0 -12 q7 -6 0 -12"/>
+      <path d="M116 24 q-7 -6 0 -12 q7 -6 0 -12"/>
+    </g>
+    <!-- 받침, 다리 -->
+    <rect x="46" y="180" width="20" height="9" rx="3" fill="#2A1418"/>
+    <rect x="134" y="180" width="20" height="9" rx="3" fill="#2A1418"/>
+    <rect x="32" y="170" width="136" height="13" rx="6" fill="#7E1022" stroke="#2A1418" stroke-width="3"/>
+    <!-- 몸통 -->
+    <rect x="20" y="80" width="160" height="96" rx="22" fill="url(#shell)" stroke="#2A1418" stroke-width="3"/>
+    <path d="M34 98 q-4 30 2 60" fill="none" stroke="#fff" stroke-opacity="0.35" stroke-width="6" stroke-linecap="round"/>
+    <!-- 뚜껑 -->
+    <path d="M24 84 C24 56 52 44 100 44 C148 44 176 56 176 84 Z" fill="url(#shell)" stroke="#2A1418" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M56 60 q20 -9 44 -10" fill="none" stroke="#fff" stroke-opacity="0.4" stroke-width="5" stroke-linecap="round"/>
+    <!-- 압력추 -->
+    <ellipse cx="100" cy="46" rx="17" ry="5" fill="#7D8590" stroke="#2A1418" stroke-width="2.5"/>
+    <rect x="90" y="30" width="20" height="16" fill="#B8BEC6" stroke="#2A1418" stroke-width="2.5"/>
+    <ellipse cx="100" cy="30" rx="10" ry="3.5" fill="#DDE1E6" stroke="#2A1418" stroke-width="2.5"/>
+    <!-- 뚜껑 여는 단추 -->
+    <circle cx="150" cy="60" r="7" fill="#F3B530" stroke="#2A1418" stroke-width="2.5"/>
+    <!-- 조작판: 버튼 + 초록 액정 -->
+    <rect x="50" y="96" width="100" height="50" rx="10" fill="#F3EEE6" stroke="#2A1418" stroke-width="2.5"/>
+    <rect x="57" y="106" width="12" height="7" rx="3.5" fill="#9AA0A8"/>
+    <rect x="57" y="119" width="12" height="7" rx="3.5" fill="#9AA0A8"/>
+    <rect x="75" y="104" width="50" height="24" rx="3" fill="#A7C09B" stroke="#2A1418" stroke-width="2"/>
+    <text x="100" y="121" text-anchor="middle" font-size="12" font-weight="700" fill="#24331F" font-family="sans-serif">취사</text>
+    <circle cx="138" cy="116" r="7" fill="#E4572E" stroke="#2A1418" stroke-width="2"/>
+    <!-- 로고 배지 -->
+    <ellipse cx="100" cy="160" rx="20" ry="7" fill="#5A4A9C" stroke="#fff" stroke-width="2"/>
+    <!-- 뚜껑에 붙은 부적 -->
+    <g transform="rotate(-16 44 60)">
+      <rect x="34" y="48" width="20" height="44" fill="#F7D046" stroke="#2A1418" stroke-width="2"/>
+      <path d="M44 53 v6 M38 59 h12 M44 59 q-5 5 0 9 q5 4 0 8 q-4 4 0 8 M39 86 h10" fill="none" stroke="#D7263D" stroke-width="2.2" stroke-linecap="round"/>
+    </g>
+  </symbol>
+</svg>
+
+<!-- 1. 첫 화면 -->
+<section id="splash" class="screen center">
+  <svg class="bap" width="180" height="180" aria-hidden="true"><use href="#bap"/></svg>
+  <h1 class="logo-big">운수밥통</h1>
+  <p class="small">생년월일 넣으면 밥통이 점심 정해줌</p>
+</section>
+
+<!-- 2. 입력 화면 -->
+<section id="input" class="screen" hidden>
+  <header class="top">
+    <svg class="bap" aria-hidden="true"><use href="#bap"/></svg>
+    <strong>운수밥통</strong>
+    <button id="helpBtn" class="help" aria-label="도움말">?</button>
+  </header>
+  <p id="today" class="today"></p>
+  <p class="small tagline">생년월일 넣으면 밥통이 점심 정해줌</p>
+
+  <h2 class="label">오늘 같이 먹는 사람</h2>
+  <div id="chips" class="chips">
+    <button id="plus" class="chip" aria-label="사람 추가">+</button>
+  </div>
+
+  <form id="addForm" class="add" hidden>
+    <label for="nameIn">이름</label>
+    <input id="nameIn" maxlength="6" autocomplete="off">
+    <label for="birthIn">생년월일</label>
+    <input id="birthIn" inputmode="numeric" maxlength="8" placeholder="YYYYMMDD" autocomplete="off">
+    <button id="addBtn" disabled>추가</button>
+    <p id="birthErr" class="err" hidden>날짜를 다시 확인해주세요</p>
+  </form>
+
+  <p id="count" class="small">0명 선택됨</p>
+
+  <div class="bottom">
+    <button id="cookBtn" class="primary" disabled>밥 짓기</button>
+  </div>
+</section>
+
+<!-- 3. 로딩 -->
+<section id="loading" class="screen center" hidden>
+  <svg class="bap rattle" width="160" height="160" aria-hidden="true"><use href="#bap"/></svg>
+  <p class="loading-title">취사 중...</p>
+  <p class="small">사주 여덟 글자 뜸 들이는 중</p>
+</section>
+
+<!-- 4. 결과 화면 -->
+<section id="result" class="screen center" hidden>
+  <p class="status">취사가 완료되었습니다</p>
+  <article class="card">
+    <p class="card-head" aria-hidden="true">運數大吉</p>
+    <p id="resDate" class="small"></p>
+    <p class="small ask">오늘의 추천 메뉴는?</p>
+    <p id="resLine" class="line"></p>
+    <!-- 추천 메뉴의 픽셀 아이콘 (icons/ 폴더) -->
+    <div id="resEl" class="circle"></div>
+    <h1 id="resMenu" class="menu"></h1>
+    <span class="seal" aria-hidden="true">運數<br>飯桶</span>
+  </article>
+  <a id="mapBtn" class="primary" target="_blank" rel="noopener">지도에서 찾기</a>
+  <div class="subs">
+    <button id="detailBtn">자세히 보기</button>
+    <button id="againBtn">다시 하기</button>
+  </div>
+</section>
+
+<!-- 5. 자세히 보기 -->
+<dialog id="detail">
+  <h2>오늘의 오행 분포</h2>
+  <div id="bars"></div>
+  <p id="detailText"></p>
+  <p id="debug" class="debug"></p> <!-- 검증용: 사주 글자 표시 (검증 끝나면 삭제) -->
+  <form method="dialog"><button>닫기</button></form>
+</dialog>
+
+<!-- 6. 도움말 -->
+<dialog id="help">
+  <h2>추천 원리</h2>
+  <ol>
+    <li>같이 먹는 사람들의 생년월일로 사주를 뽑고, 오늘의 일진을 더해요.</li>
+    <li>목·화·토·금·수 중 오늘 우리에게 부족한 기운을 찾아요.</li>
+    <li>그 기운을 채우는 맛의 메뉴를 추천해요. 같은 멤버, 같은 날이면 결과는 바뀌지 않아요.</li>
+  </ol>
+  <form method="dialog"><button>닫기</button></form>
+</dialog>
+
+<script>
+  // 운수밥통 메뉴 목록 — 103개 (목 20 · 화 21 · 토 22 · 금 19 · 수 21)
+  // name: 화면에 보이는 이름 / icon: icons 폴더의 파일명 (띄어쓰기 없음)
+  // 각 오행의 맨 앞 5개는 기존 25개 메뉴 순서 그대로 (회덮밥 → 연어덮밥, 매운갈비찜 삭제)
+  const menus = {
+    목: [
+      { name: "쫄면", icon: "목_쫄면.png" },
+      { name: "비빔국수", icon: "목_비빔국수.png" },
+      { name: "비빔냉면", icon: "목_비빔냉면.png" },
+      { name: "샐러드", icon: "목_샐러드.png" },
+      { name: "물회", icon: "목_물회.png" },
+      { name: "물냉면", icon: "목_물냉면.png" },
+      { name: "밀면", icon: "목_밀면.png" },
+      { name: "막국수", icon: "목_막국수.png" },
+      { name: "초계국수", icon: "목_초계국수.png" },
+      { name: "연어덮밥", icon: "목_연어덮밥.png" },
+      { name: "초밥", icon: "목_초밥.png" },
+      { name: "포케", icon: "목_포케.png" },
+      { name: "월남쌈", icon: "목_월남쌈.png" },
+      { name: "분짜", icon: "목_분짜.png" },
+      { name: "팟타이", icon: "목_팟타이.png" },
+      { name: "탕수육", icon: "목_탕수육.png" },
+      { name: "유린기", icon: "목_유린기.png" },
+      { name: "냉채족발", icon: "목_냉채족발.png" },
+      { name: "골뱅이소면", icon: "목_골뱅이소면.png" },
+      { name: "양장피", icon: "목_양장피.png" },
+    ],
+    화: [
+      { name: "제육볶음", icon: "화_제육볶음.png" },
+      { name: "불고기", icon: "화_불고기.png" },
+      { name: "닭갈비", icon: "화_닭갈비.png" },
+      { name: "직화 불백", icon: "화_직화불백.png" },
+      { name: "쭈꾸미볶음", icon: "화_쭈꾸미볶음.png" },
+      { name: "오징어볶음", icon: "화_오징어볶음.png" },
+      { name: "낙지볶음", icon: "화_낙지볶음.png" },
+      { name: "삼겹살 정식", icon: "화_삼겹살.png" },
+      { name: "우삼겹덮밥", icon: "화_우삼겹덮밥.png" },
+      { name: "숯불닭구이", icon: "화_숯불닭구이.png" },
+      { name: "닭꼬치", icon: "화_닭꼬치.png" },
+      { name: "곱창", icon: "화_곱창.png" },
+      { name: "막창", icon: "화_막창.png" },
+      { name: "떡갈비", icon: "화_떡갈비.png" },
+      { name: "고등어구이", icon: "화_고등어구이.png" },
+      { name: "장어덮밥", icon: "화_장어덮밥.png" },
+      { name: "스테이크", icon: "화_스테이크.png" },
+      { name: "수제버거", icon: "화_햄버거.png" },
+      { name: "바비큐 립", icon: "화_바비큐립.png" },
+      { name: "목살스테이크", icon: "화_목살스테이크.png" },
+      { name: "양념갈비", icon: "화_양념갈비.png" },
+    ],
+    토: [
+      { name: "카레", icon: "토_카레.png" },
+      { name: "돈까스", icon: "토_돈까스.png" },
+      { name: "규동", icon: "토_규동.png" },
+      { name: "오므라이스", icon: "토_오므라이스.png" },
+      { name: "돌솥비빔밥", icon: "토_돌솥비빔밥.png" },
+      { name: "비빔밥", icon: "토_비빔밥.png" },
+      { name: "김밥", icon: "토_김밥.png" },
+      { name: "볶음밥", icon: "토_볶음밥.png" },
+      { name: "치킨마요덮밥", icon: "토_치킨마요덮밥.png" },
+      { name: "가츠동", icon: "토_가츠동.png" },
+      { name: "텐동", icon: "토_텐동.png" },
+      { name: "함박스테이크", icon: "토_함박스테이크.png" },
+      { name: "크림파스타", icon: "토_크림파스타.png" },
+      { name: "토마토파스타", icon: "토_토마토파스타.png" },
+      { name: "리조또", icon: "토_리조또.png" },
+      { name: "피자", icon: "토_피자.png" },
+      { name: "샌드위치", icon: "토_샌드위치.png" },
+      { name: "호박죽", icon: "토_호박죽.png" },
+      { name: "떡국", icon: "토_떡국.png" },
+      { name: "만두", icon: "토_만두.png" },
+      { name: "치킨", icon: "토_치킨.png" },
+      { name: "백반", icon: "토_백반.png" },
+    ],
+    금: [
+      { name: "마라탕", icon: "금_마라탕.png" },
+      { name: "짬뽕", icon: "금_짬뽕.png" },
+      { name: "매운 칼국수", icon: "금_매운칼국수.png" },
+      { name: "떡볶이", icon: "금_떡볶이.png" },
+      { name: "마라샹궈", icon: "금_마라샹궈.png" },
+      { name: "라볶이", icon: "금_라볶이.png" },
+      { name: "로제떡볶이", icon: "금_로제떡볶이.png" },
+      { name: "닭볶음탕", icon: "금_닭볶음탕.png" },
+      { name: "낙곱새", icon: "금_낙곱새.png" },
+      { name: "불족발", icon: "금_불족발.png" },
+      { name: "부대찌개", icon: "금_부대찌개.png" },
+      { name: "육개장", icon: "금_육개장.png" },
+      { name: "순두부찌개", icon: "금_순두부찌개.png" },
+      { name: "감자탕", icon: "금_감자탕.png" },
+      { name: "매운탕", icon: "금_매운탕.png" },
+      { name: "아귀찜", icon: "금_아귀찜.png" },
+      { name: "탄탄면", icon: "금_탄탄면.png" },
+      { name: "마파두부덮밥", icon: "금_마파두부덮밥.png" },
+      { name: "깐풍기", icon: "금_깐풍기.png" },
+    ],
+    수: [
+      { name: "국밥", icon: "수_국밥.png" },
+      { name: "김치찌개", icon: "수_김치찌개.png" },
+      { name: "된장찌개", icon: "수_된장찌개.png" },
+      { name: "쌀국수", icon: "수_쌀국수.png" },
+      { name: "짜장면", icon: "수_짜장면.png" },
+      { name: "순대국", icon: "수_순대국.png" },
+      { name: "돼지국밥", icon: "수_돼지국밥.png" },
+      { name: "설렁탕", icon: "수_설렁탕.png" },
+      { name: "곰탕", icon: "수_곰탕.png" },
+      { name: "갈비탕", icon: "수_갈비탕.png" },
+      { name: "삼계탕", icon: "수_삼계탕.png" },
+      { name: "칼국수", icon: "수_칼국수.png" },
+      { name: "수제비", icon: "수_수제비.png" },
+      { name: "우동", icon: "수_우동.png" },
+      { name: "라멘", icon: "수_라멘.png" },
+      { name: "소바", icon: "수_소바.png" },
+      { name: "콩국수", icon: "수_콩국수.png" },
+      { name: "청국장", icon: "수_청국장.png" },
+      { name: "해장국", icon: "수_해장국.png" },
+      { name: "간장게장", icon: "수_간장게장.png" },
+      { name: "샤브샤브", icon: "수_샤브샤브.png" },
+    ],
+  };
+  // 오행 영어 이름 — CSS 색 변수(--wood 등)에 씀
+  const EN = { 목: "wood", 화: "fire", 토: "earth", 금: "metal", 수: "water" };
+  // 결과 한 줄 해석: "오늘 우리는 ○ 기운이 부족해요. ___ 채워줘요."
+  const fills = { 목: "새콤한 맛이", 화: "불맛이", 토: "든든한 곡물과 단맛이", 금: "매운맛이", 수: "짭짤한 국물이" };
+  // 오행이 고루 조화로운 날 (부족한 기운 없음 → 백반)
+  const balanced = {
+    line: "오행이 고루 조화로워요.\n골고루 차린 백반이 딱이에요.",
+    desc: "다섯 기운이 고루 갖춰진 날이에요.\n어느 쪽도 모자라지 않아요.\n골고루 차린 한 상으로 균형 유지!",
+  };
+  // 자세히 보기: 부족한 오행 설명 (\n = 줄바꿈, 마침표마다)
+  const descs = {
+    목: "목은 나무의 기운, 새로 시작하는 힘이에요.\n오늘은 이게 모자라 시작이 굼떠요.\n새콤한 맛으로 깨워요.",
+    화: "화는 불의 기운, 의욕과 열정 담당이에요.\n오늘은 불씨가 약해요.\n불맛으로 확 지펴요.",
+    토: "토는 흙의 기운, 중심을 잡아주는 힘이에요.\n오늘은 마음이 붕 떠 있어요.\n든든한 곡물과 단맛으로 눌러줘요.",
+    금: "금은 쇠의 기운, 딱 끊고 정리하는 힘이에요.\n오늘은 자꾸 흐지부지돼요.\n매운맛으로 정신 번쩍!",
+    수: "수는 물의 기운, 차분히 쉬고 모으는 힘이에요.\n오늘은 바싹 말라 있어요.\n짭짤한 국물로 촉촉하게.",
+  };
+
+  const $ = (id) => document.getElementById(id);
+  const chips = $("chips"), plus = $("plus"), addForm = $("addForm");
+  const nameIn = $("nameIn"), birthIn = $("birthIn"), addBtn = $("addBtn"), birthErr = $("birthErr");
+
+  // 명단 저장/읽기. 저장이 막힌 환경(사생활 보호 모드 등)이어도 앱은 그대로 동작
+  const KEY = "unsubaptong.people";
+  function loadPeople() {
+    try {
+      const list = JSON.parse(localStorage.getItem(KEY));
+      return Array.isArray(list) ? list : [];
+    } catch {
+      return [];
+    }
+  }
+  function savePeople() {
+    try {
+      localStorage.setItem(KEY, JSON.stringify(people));
+    } catch {}
+  }
+
+  let people = loadPeople();  // 명단: { name, birth }
+  const selected = new Set(); // 오늘 먹는 사람들
+
+  function show(id) {
+    document.querySelectorAll(".screen").forEach((s) => (s.hidden = s.id !== id));
+  }
+
+  // 오늘 날짜
+  function today() {
+    // 검증용: 주소 끝에 ?date=2026-09-30 을 붙이면 그 날을 오늘로 계산 (검증 끝나면 아래 두 줄 삭제)
+    const fake = new Date(`${new URLSearchParams(location.search).get("date")}T00:00`);
+    if (!isNaN(fake)) return fake;
+    return new Date();
+  }
+
+  function dateText(d) {
+    return `${d.getMonth() + 1}.${d.getDate()}`;
+  }
+
+  // 8자리 + 실제로 있는 날짜(19950231 X) + 1900년 ~ 오늘
+  function isValidBirth(s) {
+    if (!/^\d{8}$/.test(s)) return false;
+    const y = +s.slice(0, 4), m = +s.slice(4, 6), d = +s.slice(6, 8);
+    const date = new Date(y, m - 1, d);
+    return date.getFullYear() === y && date.getMonth() === m - 1 && date.getDate() === d
+      && y >= 1900 && date <= new Date();
+  }
+
+  // 글자 → 오행 (천간 10글자 + 지지 12글자)
+  const OHENG = {
+    甲: "목", 乙: "목", 丙: "화", 丁: "화", 戊: "토", 己: "토", 庚: "금", 辛: "금", 壬: "수", 癸: "수",
+    寅: "목", 卯: "목", 巳: "화", 午: "화", 申: "금", 酉: "금", 亥: "수", 子: "수", 辰: "토", 戌: "토", 丑: "토", 未: "토",
+  };
+
+  // 생년월일 → [년주, 월주, 일주] (한자 2글자씩). 입춘·절기 경계는 라이브러리가 처리
+  // ponytail: 태어난 시간을 모르니 낮 12시로 계산. 절기가 바뀌는 바로 그날 태어난 사람만 결과가 갈릴 수 있음
+  function saju(birth) {
+    const y = +birth.slice(0, 4), m = +birth.slice(4, 6), d = +birth.slice(6, 8);
+    const e = Solar.fromYmdHms(y, m, d, 12, 0, 0).getLunar().getEightChar();
+    return [e.getYear(), e.getMonth(), e.getDay()];
+  }
+
+  // 멤버 + 날짜 → 오행 개수, 부족한 오행, 메뉴. 랜덤 없음: 같은 멤버·같은 날이면 항상 같은 결과
+  function recommend(members, date = new Date()) {
+    const dayNum = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) / 86400000; // 1970.1.1부터 며칠째
+    const today = Solar.fromDate(date).getLunar().getDayInGanZhi(); // 오늘 일진 2글자
+
+    // 1인당 사주 6글자 + 일진 2글자 = 8글자씩 세기
+    const counts = { 목: 0, 화: 0, 토: 0, 금: 0, 수: 0 };
+    for (const p of members) {
+      for (const c of saju(p.birth).join("") + today) counts[OHENG[c]]++;
+    }
+
+    // 오행이 고루 조화로우면(가장 많은 것과 가장 적은 것의 차이가 1 이하) 부족한 기운 없이 백반
+    const values = Object.values(counts);
+    if (Math.max(...values) - Math.min(...values) <= 1) {
+      return { counts, lack: null, menu: menus.토.find((m) => m.name === "백반") };
+    }
+
+    // 부족한 등수: 개수가 가장 적은 오행들 = 1등, 그다음으로 적은 오행들 = 2등
+    const levels = [...new Set(Object.values(counts))].sort((a, b) => a - b);
+    // 짝수 날은 1등, 홀수 날은 2등을 씀 (나오는 메뉴가 한두 오행에 몰리지 않게)
+    const level = levels[Math.min(dayNum % 2, levels.length - 1)];
+    // 같은 등수가 여럿이면 날짜로 돌려가며 하나 (랜덤 금지)
+    const same = Object.keys(counts).filter((el) => counts[el] === level);
+    const lack = same[dayNum % same.length];
+
+    // 메뉴 순번 = (날짜 + 생년월일 숫자들의 합) ÷ 메뉴 개수의 나머지 → 다음 날엔 다음 메뉴
+    const memberNum = members.reduce((sum, p) => sum + Number(p.birth), 0);
+    const list = menus[lack];
+    return { counts, lack, menu: list[(dayNum + memberNum) % list.length] };
+  }
+
+  // 이름 칩 하나: [이름 ×]
+  function makeChip(p) {
+    const chip = document.createElement("span");
+    chip.className = selected.has(p) ? "chip on" : "chip";
+
+    const name = document.createElement("button");
+    name.className = "name";
+    name.textContent = p.name;
+    name.setAttribute("aria-pressed", selected.has(p));
+    name.onclick = () => {
+      if (selected.has(p)) selected.delete(p);
+      else selected.add(p);
+      renderRoster();
+    };
+
+    const del = document.createElement("button");
+    del.className = "del";
+    del.textContent = "×";
+    del.setAttribute("aria-label", `${p.name} 명단에서 삭제`);
+    del.onclick = () => {
+      people = people.filter((q) => q !== p);
+      selected.delete(p);
+      savePeople();
+      renderRoster();
+    };
+
+    chip.append(name, del);
+    return chip;
+  }
+
+  // 명단 다시 그리기 (추가/선택/삭제 할 때마다 호출)
+  function renderRoster() {
+    chips.replaceChildren(...people.map(makeChip), plus);
+    if (people.length === 0) addForm.hidden = false; // 명단이 비어 있으면 추가 줄 펼치기
+    plus.setAttribute("aria-expanded", !addForm.hidden);
+    $("count").textContent = `${selected.size}명 선택됨`;
+    $("cookBtn").disabled = selected.size === 0;
+  }
+
+  // 입력 검사: 이름 있음 + 생년월일 올바름 → 추가 버튼 켜기
+  function checkForm() {
+    birthIn.value = birthIn.value.replace(/\D/g, ""); // 숫자만 남기기
+    const ok = isValidBirth(birthIn.value);
+    // 아직 치는 중(8자리 전)이면 안내 문구는 참기
+    const typing = birthIn.value.length < 8 && document.activeElement === birthIn;
+    birthErr.hidden = ok || birthIn.value === "" || typing;
+    addBtn.disabled = !ok || nameIn.value.trim() === "";
+  }
+
+  function showResult() {
+    const members = people.filter((p) => selected.has(p)); // 명단 순서대로 (선택 순서 무관)
+    const date = today();
+    const { counts, lack, menu } = recommend(members, date);
+
+    const who = members.length === 1 ? `${members[0].name}님은` : "우리는";
+    $("resDate").textContent = `${dateText(date)} · ${members.map((p) => p.name).join(", ")}`;
+    $("resLine").textContent = lack ? `오늘 ${who} ${lack} 기운이 부족해요. ${fills[lack]} 채워줘요.` : `오늘 ${who} ${balanced.line}`;
+    $("resEl").innerHTML = `<img src="icons/메뉴/${menu.icon}" alt="">`; // 원 안에 메뉴 픽셀 아이콘
+    document.body.style.setProperty("--point", lack ? `var(--${EN[lack]})` : "var(--earth)"); // 오늘 오행의 포인트 색 (조화로운 날은 백반이라 토)
+    $("resMenu").textContent = menu.name;
+    $("mapBtn").href = "https://map.naver.com/p/search/" + encodeURIComponent(menu.name);
+
+    const max = Math.max(...Object.values(counts));
+    $("bars").replaceChildren(...Object.entries(counts).map(([el, n]) => {
+      const row = document.createElement("div");
+      row.className = el === lack ? "bar low" : "bar";
+      row.innerHTML = `<span>${el}</span><div class="track"><i style="width:${(n / max) * 100}%; background:var(--${EN[el]})"></i></div><span>${n}</span>`;
+      return row;
+    }));
+    $("detailText").textContent = lack ? descs[lack] : balanced.desc;
+
+    // 검증용: 사람마다 사주 6글자 + 오늘 일진 2글자 (검증 끝나면 삭제)
+    const dayPillar = Solar.fromDate(date).getLunar().getDayInGanZhi();
+    $("debug").textContent = members.map((p) => `${p.name}  ${saju(p.birth).join(" ")} + ${dayPillar}`).join("\n");
+  }
+
+  // ── 버튼 연결 ──
+  plus.onclick = () => {
+    addForm.hidden = !addForm.hidden;
+    renderRoster();
+    if (!addForm.hidden) nameIn.focus();
+  };
+  nameIn.oninput = checkForm;
+  birthIn.oninput = checkForm;
+  birthIn.onblur = checkForm;
+  addForm.onsubmit = (e) => {
+    e.preventDefault();
+    if (addBtn.disabled) return;
+    const p = { name: nameIn.value.trim(), birth: birthIn.value };
+    people.push(p);
+    savePeople();
+    selected.add(p); // 방금 추가한 사람은 바로 선택
+    addForm.reset();
+    checkForm();
+    renderRoster();
+    nameIn.focus();
+  };
+  $("cookBtn").onclick = () => {
+    if (!window.Solar) {
+      alert("사주 계산 도구를 불러오지 못했어요. 인터넷 연결을 확인하고 새로고침해주세요.");
+      return;
+    }
+    show("loading");
+    setTimeout(() => {
+      showResult();
+      show("result");
+    }, 1500);
+  };
+  $("againBtn").onclick = () => show("input"); // 선택 상태는 그대로
+  $("detailBtn").onclick = () => $("detail").showModal();
+  $("helpBtn").onclick = () => $("help").showModal();
+
+  // ── 시작 ──
+  const now = today();
+  $("today").textContent = `${dateText(now)} (${"일월화수목금토"[now.getDay()]})`;
+  renderRoster();
+  setTimeout(() => show("input"), 1500);
+
+  // 결과 화면 글자를 미리 받아두기 (안 하면 결과가 뜰 때 잠깐 다른 폰트로 보임)
+  document.fonts.load('900 20px "Noto Serif KR"', Object.values(menus).flat().map((m) => m.name).join("") + "지도에서 찾기취사 중運數大吉飯桶").catch(() => {});
+</script>
+</body>
+</html>

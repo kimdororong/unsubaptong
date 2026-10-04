@@ -3,6 +3,8 @@
 !/.gitignore
 !/.nojekyll
 !/index.html
+!/claude.html
+!/original.html
 !/img/
 !/fonts/
 !/icons/
